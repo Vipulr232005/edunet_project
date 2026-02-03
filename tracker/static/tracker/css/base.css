@@ -1,0 +1,27 @@
+/* PCOD GirlCare – shared variables and base styles */
+:root {
+    --bg-main: #fff5f7;
+    --bg-card: #ffffff;
+    --pink: #ff9ebc;
+    --pink-soft: #ffcede;
+    --lavender: #d8c6ff;
+    --mint: #c9f0dd;
+    --peach: #ffd8b5;
+    --text-main: #6f4b5c;
+    --text-muted-soft: #9b7688;
+}
+
+body {
+    background: radial-gradient(circle at top left, #ffe4ef 0%, #fff5f7 40%, #fdfbff 100%);
+    font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-main);
+}
+
+h2, h5 {
+    font-weight: 600;
+}
+
+p, small, li {
+    color: var(--text-main);
+    font-weight: 400;
+}

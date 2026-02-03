@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCOD Management & Wellness Tracker</title>
+
+    <!-- Google Font: Poppins (soft, feminine, rounded) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'tracker/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar text-white p-4 d-flex flex-column">
+        <h4 class="mb-4 pb-2 border-bottom border-light">
+            <i class="bi bi-flower1 me-2"></i>PCOD GirlCare
+        </h4>
+        <a href="{% url 'tracker:dashboard' %}" class="text-white mb-2 p-2 px-3 active" style="text-decoration: none;">
+            <i class="bi bi-house-door-heart me-2"></i>Dashboard
+        </a>
+        <a href="#" class="text-white mb-2 p-2 px-3" style="text-decoration: none;">
+            <i class="bi bi-calendar3-heart me-2"></i>Cycle Tracker
+        </a>
+        <a href="#" class="text-white mb-2 p-2 px-3" style="text-decoration: none;">
+            <i class="bi bi-bar-chart-line me-2"></i>Insights
+        </a>
+        <a href="#" class="text-white mb-2 p-2 px-3" style="text-decoration: none;">
+            <i class="bi bi-heart-pulse-fill me-2"></i>Wellness
+        </a>
+        <form method="post" action="{% url 'tracker:logout' %}" class="mt-auto">
+            {% csrf_token %}
+            <button type="submit" class="border-0 bg-transparent text-white p-2 px-3 w-100 text-start d-flex align-items-center" style="border-radius: 999px; font-weight: 500; font-size: 0.95rem; text-decoration: none;">
+                <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </button>
+        </form>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-content">
+        <div class="container-fluid py-3">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffc8dd,#ffafcc);display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-person-heart text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="fw-semibold mb-1" style="color:#6b3350;">Hey {{ username }}, check‑in time 💗</h2>
+                            <p class="mb-0 header-subtitle">Your data is private. Track your PCOD symptoms, mood, and tiny wins—one cute card at a time.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics row -->
+            <div class="row g-4 mb-4">
+                <!-- Symptoms Today -->
+                <div class="col-xl-4 col-md-6">
+                    <div class="card card-symptoms metric-card">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="me-3">
+                                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-emoji-frown-fill fs-5" style="color:#e0527b;"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 metric-text-wrapper">
+                                <div class="metric-label mb-1">Symptoms today</div>
+                                <div class="metric-value mb-1">
+                                    {{ symptoms_count|default:0 }}
+                                </div>
+                                <small class="badge-soft" style="background:#ffe4ef;color:#6a274a;">
+                                    Acne: {{ acne_level|default:"–" }}/10
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cycle Day -->
+                <div class="col-xl-2 col-md-6">
+                    <div class="card metric-card" style="background:linear-gradient(135deg,#f8f0ff,#e7d6ff);">
+                        <div class="card-body metric-text-wrapper">
+                            <div class="metric-label mb-1">Cycle day</div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="metric-value">{{ cycle_day|default:"–" }}</div>
+                                <i class="bi bi-calendar3-heart fs-4" style="color:#7f5ac7;"></i>
+                            </div>
+                            <small class="text-muted" style="color:var(--text-muted-soft) !important;">Cycle day</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Steps -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card" style="background:linear-gradient(135deg,#e3fcec,#c9f0dd);">
+                        <div class="card-body metric-text-wrapper">
+                            <div class="metric-label mb-1">Steps today</div>
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <div class="metric-value">{{ steps|default:"–" }}</div>
+                                <i class="bi bi-shoe-print fs-4" style="color:#268a5b;"></i>
+                            </div>
+                            <small class="text-muted" style="color:var(--text-muted-soft) !important;">Goal: 10,000 steps</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wellness Score -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="card metric-card" style="background:linear-gradient(135deg,#ffe9d6,#ffd8b5);">
+                        <div class="card-body text-center metric-text-wrapper">
+                            <div class="metric-label mb-1">Wellness score</div>
+                            <div class="metric-value">{{ wellness_score|default:"–" }}{% if wellness_score is not None %}%{% endif %}</div>
+                            <span class="tag-chip mt-1">This week's vibe</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Symptoms log + note -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold">
+                                <i class="bi bi-heart-half me-2"></i>Today's symptom board
+                            </h5>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" data-bs-toggle="collapse" data-bs-target="#logTodayForm">
+                                <i class="bi bi-plus-lg me-1"></i>Log / Update today
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center gy-3">
+                                <div class="col-6 col-md-3">
+                                    <i class="bi bi-circle-fill fs-1" style="color:#ff6f91;"></i>
+                                    <p class="mb-0 fw-medium">Acne</p>
+                                    <small>{{ acne_level|default:"–" }}/10</small>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <i class="bi bi-emoji-dizzy fs-1" style="color:#ffb347;"></i>
+                                    <p class="mb-0 fw-medium">Fatigue</p>
+                                    <small>{{ fatigue_level|default:"–" }}/10</small>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <i class="bi bi-water fs-1" style="color:#64b5f6;"></i>
+                                    <p class="mb-0 fw-medium">Bloating</p>
+                                    <small>{{ bloating_level|default:"–" }}/10</small>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <i class="bi bi-moon-stars fs-1" style="color:#9c27b0;"></i>
+                                    <p class="mb-0 fw-medium">Sleep</p>
+                                    <small>{{ sleep_quality|default:"–" }}/10</small>
+                                </div>
+                            </div>
+                            <div class="collapse mt-3" id="logTodayForm">
+                                <hr>
+                                <h6 class="fw-semibold mb-3">Log or update today's metrics (only you see this)</h6>
+                                <form method="post" action="{% url 'tracker:dashboard' %}">
+                                    {% csrf_token %}
+                                    <div class="row g-2">
+                                        <div class="col-6 col-md-4"><label class="form-label small">Cycle day</label>{{ log_form.cycle_day }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Steps</label>{{ log_form.steps }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Wellness %</label>{{ log_form.wellness_score }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Acne (1–10)</label>{{ log_form.acne_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Fatigue (1–10)</label>{{ log_form.fatigue_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Bloating (1–10)</label>{{ log_form.bloating_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Sleep (1–10)</label>{{ log_form.sleep_quality }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Weight (kg)</label>{{ log_form.weight_kg }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Mood (1–10)</label>{{ log_form.mood }}</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm mt-3 rounded-pill" style="background:#ff9ebc;border:none;color:#5b2941;">Save my data</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky note / affirmation -->
+                <div class="col-lg-4">
+                    <div class="card sticky-note h-100">
+                        <div class="card-body">
+                            <h5 class="mb-2 fw-semibold">Little reminder ✨</h5>
+                            <p class="mb-2" style="font-size:0.95rem;">
+                                Your worth is not defined by your symptoms or your cycle.
+                                Tiny healthy choices still count as progress.
+                            </p>
+                            <ul class="mb-3" style="font-size:0.9rem;">
+                                <li>Drink 2–3 glasses of water.</li>
+                                <li>Take 5 deep breaths before bed.</li>
+                                <li>Move your body for 10 minutes.</li>
+                            </ul>
+                            <button class="btn btn-sm w-100" style="background:#ff9ebc;border:none;color:#5b2941;">
+                                Save today's wins 💕
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts + Quick actions -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold">Weight & mood glow‑up</h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <canvas id="trendsChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header bg-transparent">
+                            <h5 class="mb-0 fw-semibold">Quick actions</h5>
+                        </div>
+                        <div class="card-body d-grid gap-2">
+                            <button class="btn btn-outline-danger rounded-pill">
+                                <i class="bi bi-pencil-square me-1"></i>Journal mood
+                            </button>
+                            <button class="btn btn-outline-secondary rounded-pill">
+                                <i class="bi bi-cup-straw me-1"></i>Log water
+                            </button>
+                            <button class="btn btn-outline-success rounded-pill">
+                                <i class="bi bi-pause-circle me-1"></i>5‑min stretch
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js config – data for current user only -->
+    <script>
+        (function() {
+            var chartLabels = {{ chart_labels_json|safe }};
+            var chartWeight = {{ chart_weight_json|safe }};
+            var chartMood = {{ chart_mood_json|safe }};
+            var el = document.getElementById('trendsChart');
+            if (!el) return;
+            var ctx = el.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Weight (kg)',
+                            data: chartWeight,
+                            borderColor: '#ff9ebc',
+                            backgroundColor: 'rgba(255, 158, 188, 0.15)',
+                            tension: 0.4,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Mood (1–10)',
+                            data: chartMood,
+                            borderColor: '#b388ff',
+                            backgroundColor: 'rgba(179,136,255,0.18)',
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'Weight' }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            min: 0,
+                            max: 10,
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Mood' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { usePointStyle: true } }
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

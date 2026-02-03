@@ -1,0 +1,73 @@
+/* Login & Signup pages */
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-card,
+.login-card {
+    background: var(--bg-card);
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 18px 35px rgba(255, 143, 177, 0.18);
+    max-width: 420px;
+    width: 100%;
+}
+
+.auth-card .card-body,
+.login-card .card-body {
+    padding: 2rem;
+}
+
+.brand {
+    background: linear-gradient(135deg, #ffc8dd, #ffafcc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.form-control {
+    border-radius: 999px;
+    border-color: #ffcede;
+    padding: 0.6rem 1.2rem;
+}
+
+.form-control:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 0.2rem rgba(255, 158, 188, 0.25);
+}
+
+.btn-login,
+.btn-signup {
+    background: linear-gradient(135deg, #ffc8dd, #ff9ebc);
+    border: none;
+    color: #5b2941;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+}
+
+.btn-login:hover,
+.btn-signup:hover {
+    background: linear-gradient(135deg, #ffafcc, #ff7a9e);
+    color: #5b2941;
+}
+
+.alert {
+    border-radius: 16px;
+}
+
+.form-text,
+.errorlist {
+    font-size: 0.8rem;
+}
+
+.errorlist {
+    list-style: none;
+    padding-left: 0;
+    color: #c62828;
+}
