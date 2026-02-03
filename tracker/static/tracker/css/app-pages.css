@@ -1,0 +1,46 @@
+/* Shared styles for Cycle Tracker, Wellness, Insights */
+.app-page .page-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffc8dd, #ffafcc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.5rem;
+}
+.app-page .page-title {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #6b3350;
+    margin-bottom: 0.25rem;
+}
+.app-page .page-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted-soft);
+}
+.app-page .cycle-day-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+.app-page .insight-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+.app-page .phase-card {
+    border: none;
+}
+.app-page .list-group-flush-soft .list-group-item {
+    border-color: rgba(255, 182, 193, 0.3);
+    background: transparent;
+}
+.app-page .metric-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    color: var(--text-muted-soft);
+}

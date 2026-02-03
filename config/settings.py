@@ -78,5 +78,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'tracker:dashboard'
-LOGOUT_REDIRECT_URL = 'tracker:login'
+LOGOUT_REDIRECT_URL = 'tracker:home'
 LOGIN_URL = 'tracker:login'
+
+# CSRF: allow localhost and 127.0.0.1 so form POST works in development
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False

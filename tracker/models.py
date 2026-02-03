@@ -13,6 +13,7 @@ class DailyLog(models.Model):
     # Metrics
     cycle_day = models.PositiveSmallIntegerField(null=True, blank=True)
     steps = models.PositiveIntegerField(null=True, blank=True, default=0)
+    water_glasses = models.PositiveSmallIntegerField(null=True, blank=True, default=0)
     wellness_score = models.PositiveSmallIntegerField(null=True, blank=True)  # 0–100
     # Symptoms (1–10)
     acne_level = models.PositiveSmallIntegerField(null=True, blank=True)

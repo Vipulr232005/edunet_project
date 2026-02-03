@@ -19,6 +19,7 @@
     border-radius: 999px;
     font-weight: 500;
     font-size: 0.95rem;
+    transition: background 0.2s ease, color 0.2s ease, backdrop-filter 0.2s ease;
 }
 
 .sidebar a.active,
@@ -38,11 +39,124 @@
     border: none;
     border-radius: 24px;
     box-shadow: 0 18px 35px rgba(255, 143, 177, 0.18);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 22px 42px rgba(255, 143, 177, 0.22);
+}
+
+/* Metric cards row: hover one to expand, others compress */
+.metrics-cards-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: nowrap;
+}
+
+.metrics-card-col {
+    flex: 1 1 0;
+    min-width: 0;
+    transition: flex 0.4s ease;
+}
+
+.metrics-cards-row:hover .metrics-card-col {
+    flex: 0.5 1 0;
+}
+
+.metrics-cards-row .metrics-card-col:hover {
+    flex: 2.5 1 0;
+}
+
+/* No scale on hover for expandable metric cards – flex handles size */
+.metrics-card-col .card.metric-card-expand:hover {
+    transform: none;
+    box-shadow: 0 22px 42px rgba(255, 143, 177, 0.25);
 }
 
 .metric-card {
     height: 130px;
     overflow: hidden;
+}
+
+.metrics-card-col .metric-card-expand {
+    height: 100%;
+    min-height: 130px;
+    transition: min-height 0.4s ease, box-shadow 0.3s ease;
+}
+
+.metrics-card-col:hover .metric-card-expand {
+    min-height: 240px;
+    overflow: visible;
+}
+
+/* Extra detail shown when metric card is hovered (expanded) */
+.metric-card-detail {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.35s ease, max-height 0.4s ease;
+}
+
+.metrics-card-col:hover .metric-card-detail {
+    opacity: 1;
+    max-height: 180px;
+}
+
+/* Compact view: only heading + main value, rotated 90° when compressed */
+.metric-card-compact {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    transform: rotate(-90deg);
+    transform-origin: center center;
+}
+
+.metric-card-compact .metric-label {
+    font-size: 0.65rem;
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+.metric-card-compact .metric-value {
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+/* When row is hovered and this column is NOT hovered: show compact rotated, hide full */
+.metrics-cards-row:hover .metrics-card-col:not(:hover) .metric-card-compact {
+    display: flex;
+}
+
+.metrics-cards-row:hover .metrics-card-col:not(:hover) .metric-card-full {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.metric-card-full {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* When this column is hovered or no hover on row: show full, hide compact */
+.metrics-card-col:hover .metric-card-compact,
+.metrics-cards-row:not(:hover) .metric-card-compact {
+    display: none;
+}
+
+.metrics-card-col:hover .metric-card-full,
+.metrics-cards-row:not(:hover) .metric-card-full {
+    opacity: 1;
+    visibility: visible;
 }
 
 .metric-label {
@@ -96,6 +210,19 @@
     border: 1px dashed #ffb6c8;
 }
 
+/* Subtle button hover animations */
+.main-content .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.main-content .btn:hover {
+    transform: scale(1.03);
+}
+
+.main-content .btn:active {
+    transform: scale(0.98);
+}
+
 .sticky-note h5 {
     font-family: "Poppins", sans-serif;
     font-weight: 600;
@@ -104,6 +231,20 @@
 .header-subtitle {
     color: var(--text-muted-soft);
     font-size: 0.95rem;
+}
+
+@media (max-width: 992px) {
+    .metrics-cards-row {
+        flex-wrap: wrap;
+    }
+    .metrics-card-col {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 140px;
+    }
+    .metrics-cards-row:hover .metrics-card-col,
+    .metrics-cards-row .metrics-card-col:hover {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
 }
 
 @media (max-width: 768px) {
@@ -117,5 +258,12 @@
     .main-content {
         margin-left: 0;
         padding: 16px;
+    }
+    .metrics-card-col {
+        flex: 1 1 100%;
+    }
+    .metrics-cards-row:hover .metrics-card-col,
+    .metrics-cards-row .metrics-card-col:hover {
+        flex: 1 1 100%;
     }
 }

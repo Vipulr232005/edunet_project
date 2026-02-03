@@ -1,0 +1,275 @@
+/* Home / landing page – hero, blocks, placeholders */
+.home-block {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Hero */
+.home-hero-heading {
+    font-weight: 700;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: var(--text-main);
+    line-height: 1.3;
+}
+.home-hero-lead {
+    font-size: 1.1rem;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+.home-hero-sub {
+    font-size: 1rem;
+    color: var(--text-muted-soft);
+}
+
+/* Image placeholders – replace with <img src="..." alt="..." class="img-fluid rounded-4"> */
+/* Image placeholders: add <img src="..." alt="..." class="img-fluid rounded-4"> inside; remove .home-img-placeholder class when using real image */
+.home-img-placeholder {
+    min-height: 200px;
+    background: linear-gradient(135deg, #ffe4ef 0%, #ffcede 50%, #e7d6ff 100%);
+    border: 2px dashed rgba(255, 143, 177, 0.5);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.home-img-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.home-img-hero {
+    min-height: 280px;
+}
+.home-img-affirmations,
+.home-img-understanding,
+.home-img-philosophy,
+.home-img-lifestyle,
+.home-img-food,
+.home-img-movement,
+.home-img-mental {
+    min-height: 220px;
+}
+.home-img-cta {
+    min-height: 180px;
+    max-width: 400px;
+}
+
+/* Section titles */
+.home-section-title {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--text-main);
+}
+.home-subtitle {
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--text-muted-soft);
+}
+.home-subheading {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--text-main);
+}
+
+/* Highlight lines */
+.home-highlight {
+    font-weight: 500;
+    color: var(--text-main);
+    padding: 0.5rem 0;
+}
+
+/* Affirmations */
+.home-affirm-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.home-affirm-list li {
+    padding: 0.5rem 0;
+    padding-left: 2rem;
+    position: relative;
+    color: var(--text-main);
+}
+.affirm-icon {
+    position: absolute;
+    left: 0;
+}
+.home-tip {
+    font-style: italic;
+}
+
+/* Check list (wellness philosophy) */
+.home-check-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.home-check-list li {
+    padding: 0.4rem 0;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+}
+.home-check-list .bi-check2-circle {
+    color: #7fad7f;
+    font-size: 1.1rem;
+}
+
+/* Start with list (lifestyle) */
+.home-start-list {
+    list-style: none;
+    padding-left: 1.5rem;
+    margin-bottom: 0;
+}
+.home-start-list li {
+    padding: 0.35rem 0;
+    color: var(--text-main);
+    position: relative;
+}
+.home-start-list li::before {
+    content: "•";
+    position: absolute;
+    left: -1rem;
+    color: #ff9ebc;
+}
+
+/* Bullet list (food) */
+.home-bullet-list {
+    list-style: none;
+    padding-left: 1.5rem;
+}
+.home-bullet-list li {
+    padding: 0.35rem 0;
+    color: var(--text-main);
+    position: relative;
+}
+.home-bullet-list li::before {
+    content: "•";
+    position: absolute;
+    left: -1rem;
+    color: #e0527b;
+}
+
+/* Heart list (mental health) */
+.home-heart-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.home-heart-list li {
+    padding: 0.4rem 0;
+    padding-left: 1.75rem;
+    position: relative;
+    color: var(--text-main);
+}
+.heart-icon {
+    position: absolute;
+    left: 0;
+}
+
+/* Alternate block backgrounds */
+.home-affirmations {
+    background: linear-gradient(180deg, rgba(255, 228, 239, 0.4) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-understanding {
+    background: linear-gradient(180deg, rgba(232, 214, 255, 0.3) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-philosophy {
+    background: linear-gradient(180deg, rgba(201, 240, 221, 0.3) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-lifestyle {
+    background: linear-gradient(180deg, rgba(255, 216, 181, 0.25) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-food {
+    background: linear-gradient(180deg, rgba(255, 228, 239, 0.35) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-movement {
+    background: linear-gradient(180deg, rgba(189, 224, 254, 0.3) 0%, transparent 100%);
+    border-radius: 24px;
+}
+.home-mental {
+    background: linear-gradient(180deg, rgba(232, 214, 255, 0.25) 0%, transparent 100%);
+    border-radius: 24px;
+}
+
+/* Buttons */
+.btn-home-primary {
+    background: linear-gradient(135deg, #ffc8dd, #ff9ebc);
+    border: none;
+    color: #5b2941;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-home-primary:hover {
+    background: linear-gradient(135deg, #ffafcc, #ff7a9e);
+    color: #5b2941;
+    transform: scale(1.03);
+    box-shadow: 0 8px 20px rgba(255, 143, 177, 0.4);
+}
+.btn-home-outline {
+    background: transparent;
+    border: 2px solid #ffafcc;
+    color: #6b3350;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.btn-home-outline:hover {
+    background: rgba(255, 175, 204, 0.2);
+    color: #5b2941;
+    border-color: #ff9ebc;
+    transform: scale(1.03);
+}
+
+/* What we do cards */
+.home-section-title.text-center {
+    margin-bottom: 1.5rem;
+}
+.home-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(255, 143, 177, 0.15);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.home-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(255, 143, 177, 0.22);
+}
+.home-card-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #ffe4ef, #ffcede);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #e0527b;
+}
+
+/* Closing CTA */
+.home-cta {
+    border-top: 1px solid rgba(255, 182, 193, 0.4);
+}
+.home-cta-line {
+    font-size: 1.05rem;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+.home-cta-heading {
+    font-weight: 700;
+    font-size: 1.75rem;
+    background: linear-gradient(135deg, #ffc8dd, #ff9ebc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

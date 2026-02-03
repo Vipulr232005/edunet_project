@@ -9,13 +9,14 @@ class DailyLogForm(forms.ModelForm):
     class Meta:
         model = DailyLog
         fields = [
-            'cycle_day', 'steps', 'wellness_score',
+            'cycle_day', 'steps', 'water_glasses', 'wellness_score',
             'acne_level', 'fatigue_level', 'bloating_level', 'sleep_quality',
             'weight_kg', 'mood',
         ]
         widgets = {
             'cycle_day': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 35, 'placeholder': 'e.g. 14'}),
             'steps': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'placeholder': 'e.g. 7500'}),
+            'water_glasses': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 20, 'placeholder': 'e.g. 6'}),
             'wellness_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100, 'placeholder': '0–100'}),
             'acne_level': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10, 'placeholder': '1–10'}),
             'fatigue_level': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 10, 'placeholder': '1–10'}),

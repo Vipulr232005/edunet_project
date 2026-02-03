@@ -1,0 +1,134 @@
+{% extends 'tracker/base_nav.html' %}
+{% load static %}
+
+{% block title %}Insights · PCOD GirlCare{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}"><link rel="stylesheet" href="{% static 'tracker/css/app-pages.css' %}">{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 app-page">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center gap-3">
+                <div class="page-icon-wrap"><i class="bi bi-bar-chart-line"></i></div>
+                <div>
+                    <h2 class="page-title">Insights</h2>
+                    <p class="page-subtitle mb-0">Hey {{ username }}, your trends at a glance.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card h-100 text-center" style="background:linear-gradient(135deg,#ffe5ec,#ffc2d1);">
+                <div class="card-body py-3">
+                    <div class="metric-label small">Logs (14 days)</div>
+                    <div class="insight-value">{{ log_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 text-center" style="background:linear-gradient(135deg,#f8f0ff,#e7d6ff);">
+                <div class="card-body py-3">
+                    <div class="metric-label small">Avg mood (7d)</div>
+                    <div class="insight-value">{{ avg_mood|default:"–" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 text-center" style="background:linear-gradient(135deg,#ffe9d6,#ffd8b5);">
+                <div class="card-body py-3">
+                    <div class="metric-label small">Avg wellness (7d)</div>
+                    <div class="insight-value">{{ avg_wellness|default:"–" }}{% if avg_wellness is not None %}%{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card h-100 text-center" style="background:linear-gradient(135deg,#e3fcec,#c9f0dd);">
+                <div class="card-body py-3">
+                    <div class="metric-label small">Symptoms (7d avg)</div>
+                    <div class="insight-value small">Acne {{ avg_acne|default:"–" }} · Fat. {{ avg_fatigue|default:"–" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0 fw-semibold">Weight & mood (last 14 days)</h5>
+                </div>
+                <div class="card-body p-3">
+                    <canvas id="insightsChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0 fw-semibold">Quick takeaway</h5>
+                </div>
+                <div class="card-body">
+                    {% if log_count == 0 %}
+                    <p class="text-muted mb-0">Log on your <a href="{% url 'tracker:dashboard' %}">Dashboard</a> to see trends and insights here.</p>
+                    {% else %}
+                    <p class="small mb-2">Based on your last 7 days:</p>
+                    <ul class="small mb-0 ps-3">
+                        {% if avg_mood is not None %}<li>Average mood: <strong>{{ avg_mood }}/10</strong></li>{% endif %}
+                        {% if avg_wellness is not None %}<li>Average wellness: <strong>{{ avg_wellness }}%</strong></li>{% endif %}
+                        {% if avg_acne is not None or avg_fatigue is not None %}
+                        <li>Symptoms: Acne {{ avg_acne|default:"–" }}/10, Fatigue {{ avg_fatigue|default:"–" }}/10</li>
+                        {% endif %}
+                    </ul>
+                    <p class="small mt-3 mb-0">Keep logging to spot patterns over time. 💗</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card" style="background:linear-gradient(135deg,#fff0f5,#ffe4ef);">
+                <div class="card-body py-4">
+                    <h5 class="fw-semibold mb-2">✨ Remember</h5>
+                    <p class="mb-0">Insights are here to help you notice patterns—not to judge. Your body is unique. Small, consistent logs give you the clearest picture over time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var el = document.getElementById('insightsChart');
+    if (!el) return;
+    var labels = {{ chart_labels_json|safe }};
+    var weight = {{ chart_weight_json|safe }};
+    var mood = {{ chart_mood_json|safe }};
+    var ctx = el.getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Weight (kg)', data: weight, borderColor: '#ff9ebc', backgroundColor: 'rgba(255,158,188,0.15)', tension: 0.4, spanGaps: true },
+                { label: 'Mood (1–10)', data: mood, borderColor: '#b388ff', backgroundColor: 'rgba(179,136,255,0.18)', tension: 0.4, yAxisID: 'y1', spanGaps: true }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: false, title: { display: true, text: 'Weight' } },
+                y1: { position: 'right', beginAtZero: true, min: 0, max: 10, grid: { drawOnChartArea: false }, title: { display: true, text: 'Mood' } }
+            },
+            plugins: { legend: { labels: { usePointStyle: true } } }
+        }
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends 'tracker/base_nav.html' %}
+{% load static %}
+
+{% block title %}Cycle Tracker · PCOD GirlCare{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}"><link rel="stylesheet" href="{% static 'tracker/css/app-pages.css' %}">{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 app-page">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center gap-3">
+                <div class="page-icon-wrap"><i class="bi bi-calendar3"></i></div>
+                <div>
+                    <h2 class="page-title">Cycle Tracker</h2>
+                    <p class="page-subtitle mb-0">Hey {{ username }}, here’s your cycle at a glance.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100" style="background:linear-gradient(135deg,#f8f0ff,#e7d6ff);">
+                <div class="card-body text-center py-4">
+                    <div class="metric-label mb-1">Today’s cycle day</div>
+                    <div class="cycle-day-value">{{ cycle_day|default:"–" }}</div>
+                    <p class="small text-muted mb-0 mt-2">Log on Dashboard to update</p>
+                </div>
+            </div>
+        </div>
+        {% if phase %}
+        <div class="col-md-6 col-lg-8">
+            <div class="card h-100" style="background:linear-gradient(135deg,#ffe5ec,#ffc2d1);">
+                <div class="card-body py-4">
+                    <h5 class="fw-semibold mb-2"><i class="bi bi-flower1 me-2"></i>Current phase: {{ phase.0 }}</h5>
+                    <p class="mb-0">{{ phase.1 }}</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-md-6 col-lg-8">
+            <div class="card h-100" style="background:linear-gradient(135deg,#ffe5ec,#ffc2d1);">
+                <div class="card-body py-4">
+                    <h5 class="fw-semibold mb-2"><i class="bi bi-info-circle me-2"></i>No cycle day logged today</h5>
+                    <p class="mb-0">Add your cycle day on the <a href="{% url 'tracker:dashboard' %}">Dashboard</a> to see your phase and tips.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-calendar-week me-2"></i>Cycle phases at a glance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-3">
+                            <div class="phase-card p-3 rounded-3" style="background:#ffe4ef;">
+                                <strong>Menstrual</strong> <span class="text-muted small">(Day 1–5)</span>
+                                <p class="small mb-0 mt-1">Rest, gentle movement, iron-rich foods.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="phase-card p-3 rounded-3" style="background:#e7d6ff;">
+                                <strong>Follicular</strong> <span class="text-muted small">(Day 6–13)</span>
+                                <p class="small mb-0 mt-1">Energy often rises—good time for exercise.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="phase-card p-3 rounded-3" style="background:#c9f0dd;">
+                                <strong>Ovulatory</strong> <span class="text-muted small">(Day 14–16)</span>
+                                <p class="small mb-0 mt-1">Peak energy; strength and connection.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <div class="phase-card p-3 rounded-3" style="background:#ffd8b5;">
+                                <strong>Luteal</strong> <span class="text-muted small">(Day 17–28)</span>
+                                <p class="small mb-0 mt-1">Prioritize sleep and nourishment.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-clock-history me-2"></i>Recent cycle days</h5>
+                    <a href="{% url 'tracker:dashboard' %}" class="btn btn-sm rounded-pill" style="background:#ff9ebc;border:none;color:#5b2941;">Log on Dashboard</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th>Date</th><th>Cycle day</th></tr></thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr><td>{{ log.date|date:"D, M j" }}</td><td><strong>{{ log.cycle_day }}</strong></td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No cycle days logged yet. Start tracking on your <a href="{% url 'tracker:dashboard' %}">Dashboard</a>.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

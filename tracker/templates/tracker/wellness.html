@@ -1,0 +1,102 @@
+{% extends 'tracker/base_nav.html' %}
+{% load static %}
+
+{% block title %}Wellness · PCOD GirlCare{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}"><link rel="stylesheet" href="{% static 'tracker/css/app-pages.css' %}">{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 app-page">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center gap-3">
+                <div class="page-icon-wrap"><i class="bi bi-heart-pulse-fill"></i></div>
+                <div>
+                    <h2 class="page-title">Wellness</h2>
+                    <p class="page-subtitle mb-0">Hey {{ username }}, nurture your mind and body.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100" style="background:linear-gradient(135deg,#ffe9d6,#ffd8b5);">
+                <div class="card-body text-center py-4">
+                    <div class="metric-label mb-1">Wellness score today</div>
+                    <div class="cycle-day-value">{{ wellness_score|default:"–" }}{% if wellness_score is not None %}%{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100" style="background:linear-gradient(135deg,#e3fcec,#c9f0dd);">
+                <div class="card-body text-center py-4">
+                    <div class="metric-label mb-1">Sleep quality</div>
+                    <div class="cycle-day-value">{{ sleep_quality|default:"–" }}{% if sleep_quality is not None %}/10{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100" style="background:linear-gradient(135deg,#f8f0ff,#e7d6ff);">
+                <div class="card-body text-center py-4">
+                    <div class="metric-label mb-1">Mood today</div>
+                    <div class="cycle-day-value">{{ mood|default:"–" }}{% if mood is not None %}/10{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0 fw-semibold"><i class="bi bi-calendar3 me-2"></i>Last 7 days</h5>
+                </div>
+                <div class="card-body">
+                    {% if wellness_days %}
+                    <ul class="list-group list-group-flush list-group-flush-soft">
+                        {% for day in wellness_days %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ day.date|date:"D, M j" }}</span>
+                            <span class="small">
+                                {% if day.wellness is not None %}Wellness {{ day.wellness }}%{% endif %}
+                                {% if day.mood is not None %} · Mood {{ day.mood }}/10{% endif %}
+                                {% if day.sleep is not None %} · Sleep {{ day.sleep }}/10{% endif %}
+                                {% if day.wellness is None and day.mood is None and day.sleep is None %}–{% endif %}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">Log on your <a href="{% url 'tracker:dashboard' %}">Dashboard</a> to see history here.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100 sticky-note">
+                <div class="card-body">
+                    <h5 class="fw-semibold mb-3">🌷 Wellness reminders</h5>
+                    <ul class="mb-0 ps-3">
+                        <li class="mb-2">Gentle movement supports hormones and mood.</li>
+                        <li class="mb-2">Restful sleep is part of healing—not lazy.</li>
+                        <li class="mb-2">Nourishing food over restriction.</li>
+                        <li class="mb-2">Your worth isn’t defined by a number.</li>
+                    </ul>
+                    <a href="{% url 'tracker:dashboard' %}" class="btn btn-sm mt-3 rounded-pill" style="background:#ff9ebc;border:none;color:#5b2941;">Log today</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card" style="background:linear-gradient(135deg,#fff0f5,#ffe4ef);">
+                <div class="card-body py-4">
+                    <h5 class="fw-semibold mb-2">✨ Daily affirmation</h5>
+                    <p class="mb-0">I choose nourishment over restriction. Progress matters more than perfection. I listen to my body with patience and kindness.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
