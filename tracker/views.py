@@ -1,10 +1,64 @@
 import json
+import random
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 from .forms import SignUpForm, DailyLogForm
 from .models import DailyLog
+
+MOTIVATIONS = [
+    "Today, you choose foods that help your hormones feel safe and supported.",
+    "Eating healthy today is an act of self-respect, not restriction.",
+    "Your body is working hard for you—nourish it kindly.",
+    "One healthy choice today can ease inflammation tomorrow.",
+    "You don't need junk food to cope; you deserve real nourishment.",
+    "Stable blood sugar = better mood, better energy, better you.",
+    "You are not \"missing out\" by skipping junk—you're leveling up.",
+    "Healing PCOD starts with small, loving daily decisions.",
+    "Food is information—today, send your body calm, balanced signals.",
+    "Your future self will thank you for today's discipline.",
+    "Healthy eating today supports clearer skin, calmer cycles, and confidence.",
+    "You deserve meals that fuel you, not drain you.",
+    "Cravings pass, but self-care builds strength that lasts.",
+    "You are choosing progress over momentary pleasure.",
+    "Eating well today is a vote for hormone balance.",
+    "You're allowed to prioritize your health without guilt.",
+    "Junk food doesn't love you back—real food does.",
+    "Your body is not the enemy; it's asking for support.",
+    "Today's choices can reduce bloating, fatigue, and brain fog.",
+    "You're not \"being strict\"—you're being intentional.",
+    "Each healthy meal is a step toward cycle regularity.",
+    "You are allowed to say no to food that harms you.",
+    "Healing isn't instant, but consistency is powerful.",
+    "You're choosing energy over exhaustion.",
+    "Nourishing food helps your hormones feel less chaotic.",
+    "You are doing this for balance, not perfection.",
+    "Eating well today is a form of self-love.",
+    "You don't need junk food to reward yourself—rest and care work better.",
+    "Your body responds beautifully when treated gently.",
+    "You are stronger than a craving.",
+    "A healthy day today supports better sleep tonight.",
+    "Every nourishing bite helps reduce insulin resistance.",
+    "You are building a lifestyle, not chasing quick fixes.",
+    "Choosing whole foods today supports long-term fertility and health.",
+    "You deserve to feel light, energized, and confident.",
+    "PCOD does not define you—but your care can transform it.",
+    "One day of mindful eating is a powerful reset.",
+    "You are allowed to protect your health fiercely.",
+    "Healthy food is not punishment—it's medicine.",
+    "Your hormones thrive on consistency, not chaos.",
+    "You're choosing patience over impulse today.",
+    "This is you showing up for your body.",
+    "You don't owe junk food a yes.",
+    "Every healthy choice is proof that you care about yourself.",
+    "You are worthy of feeling good in your body.",
+    "Food that nourishes you helps your mind feel calmer too.",
+    "Today is about progress, not pressure.",
+    "You're healing from the inside out.",
+    "Skipping junk today is choosing peace over spikes and crashes.",
+    "Take care of yourself today—you deserve a healthy, gentle life. 💚",
+]
 
 
 def home(request):
@@ -66,6 +120,7 @@ def dashboard(request):
             symptoms_count = 1
         context = {
             'username': user.username,
+            'daily_motivation': random.choice(MOTIVATIONS),
             'today_log': today_log,
             'log_form': DailyLogForm(instance=today_log),
             'symptoms_count': symptoms_count,
@@ -88,6 +143,7 @@ def dashboard(request):
     else:
         context = {
             'username': user.username,
+            'daily_motivation': random.choice(MOTIVATIONS),
             'today_log': None,
             'log_form': DailyLogForm(),
             'symptoms_count': 0,

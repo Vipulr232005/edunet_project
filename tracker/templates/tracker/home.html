@@ -11,7 +11,7 @@
         <div class="row align-items-center g-4">
             <div class="col-lg-6 order-lg-2">
                 <div class="home-img-placeholder home-img-hero" aria-hidden="true">
-                    <!-- Replace with: <img src="..." alt="..." class="img-fluid rounded-4"> -->
+                    <img src="{% static 'tracker/images/imgg.png' %}" alt="Wellness" class="img-fluid rounded-4 home-hero-img">
                 </div>
             </div>
             <div class="col-lg-6 order-lg-1 text-center text-lg-start">
@@ -44,7 +44,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-4">
                 <div class="home-img-placeholder home-img-affirmations" aria-hidden="true">
-                    <!-- Image placeholder: affirmations / calm visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-8">
@@ -68,7 +68,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-6">
                 <div class="home-img-placeholder home-img-understanding" aria-hidden="true">
-                    <!-- Image placeholder: understanding / support visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-6">
@@ -86,7 +86,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-5">
                 <div class="home-img-placeholder home-img-philosophy" aria-hidden="true">
-                    <!-- Image placeholder: balance / wellness visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-7">
@@ -111,7 +111,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-6 order-lg-2">
                 <div class="home-img-placeholder home-img-lifestyle" aria-hidden="true">
-                    <!-- Image placeholder: lifestyle / small steps visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-6 order-lg-1">
@@ -137,7 +137,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-4">
                 <div class="home-img-placeholder home-img-food" aria-hidden="true">
-                    <!-- Image placeholder: food / nourishment visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-8">
@@ -161,7 +161,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-2">
                 <div class="home-img-placeholder home-img-movement" aria-hidden="true">
-                    <!-- Image placeholder: movement / joy visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-7 order-lg-1">
@@ -180,7 +180,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-4">
                 <div class="home-img-placeholder home-img-mental" aria-hidden="true">
-                    <!-- Image placeholder: mental health / self-care visual -->
+                    <!-- Image placeholder -->
                 </div>
             </div>
             <div class="col-lg-8">
@@ -253,7 +253,7 @@
         <h2 class="home-cta-heading mb-4">Track. Learn. Heal. Thrive.</h2>
         <p class="mb-4">Welcome to your PCOD wellness space 🌸</p>
         <div class="home-img-placeholder home-img-cta mx-auto" aria-hidden="true">
-            <!-- Image placeholder: closing / welcome visual -->
+            <!-- Image placeholder -->
         </div>
         {% if not user.is_authenticated %}
         <a href="{% url 'tracker:signup' %}" class="btn btn-home-primary rounded-pill px-4 mt-4">Get started</a>

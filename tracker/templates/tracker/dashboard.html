@@ -5,14 +5,23 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}">{% endblock %}
 
 {% block content %}
+<!-- Motivation message popup – shown for 5 sec before dashboard -->
+<div class="motivation-overlay" id="motivationOverlay" role="dialog" aria-labelledby="motivationTitle" aria-modal="true">
+    <div class="motivation-card">
+        <p class="motivation-icon mb-2" aria-hidden="true">💚</p>
+        <h2 class="motivation-title h5 mb-3" id="motivationTitle">Today's reminder</h2>
+        <p class="motivation-text mb-4">{{ daily_motivation }}</p>
+        <p class="motivation-countdown small text-muted mb-2" id="motivationCountdown">Continuing in <span id="motivationSec">5</span>s…</p>
+        <button type="button" class="btn btn-sm rounded-pill motivation-continue-btn" id="motivationContinueBtn" style="background:#ff9ebc;border:none;color:#5b2941;">Continue</button>
+    </div>
+</div>
+
 <div class="dashboard-wrap container-fluid py-3">
             <!-- Header -->
             <div class="row mb-4">
                 <div class="col-lg-8">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffc8dd,#ffafcc);display:flex;align-items:center;justify-content:center;">
-                            <i class="bi bi-person-heart text-white fs-4"></i>
-                        </div>
+                        <div class="dashboard-header-icon" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffc8dd,#ffafcc);display:flex;align-items:center;justify-content:center;overflow:hidden;" aria-hidden="true" title="Lotus"><img src="{% static 'tracker/images/lotus-icon.png' %}" alt="" width="32" height="32" style="object-fit:contain;"></div>
                         <div>
                             <h2 class="fw-semibold mb-1" style="color:#6b3350;">Hey {{ username }}, check‑in time 💗</h2>
                             <p class="mb-0 header-subtitle">Your data is private. Track your PCOD symptoms, mood, and tiny wins—one cute card at a time.</p>
@@ -289,7 +298,12 @@
                     </div>
                     <div class="modal-body text-center py-4">
                         <p class="text-muted small mb-3">Take a short break. Stretch your neck, shoulders, and back. Your body will thank you.</p>
-                        <div class="stretch-timer display-4 fw-bold mb-4" style="color:#6b3350;">5:00</div>
+                        <div class="stretch-timer-row d-flex flex-column align-items-center gap-2 mb-4">
+                            <span class="stretch-icon-small" aria-hidden="true">
+                                <img src="{% static 'tracker/images/stretch-icon.png' %}" alt="Stretch / yoga" class="stretch-icon-img" width="40" height="40">
+                            </span>
+                            <div class="stretch-timer display-4 fw-bold mb-0" style="color:#6b3350;">5:00</div>
+                        </div>
                         <div class="d-flex justify-content-center gap-2 flex-wrap">
                             <button type="button" class="btn btn-success rounded-pill px-4" id="stretchStart">Start</button>
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4 d-none" id="stretchPause">Pause</button>
@@ -306,6 +320,29 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
+    // Motivation popup: show for 5 sec, then hide and show dashboard
+    (function() {
+        var overlay = document.getElementById('motivationOverlay');
+        var countdownEl = document.getElementById('motivationSec');
+        var continueBtn = document.getElementById('motivationContinueBtn');
+        if (!overlay) return;
+        var sec = 5;
+        var timerId = setInterval(function() {
+            sec--;
+            if (countdownEl) countdownEl.textContent = sec > 0 ? sec : '0';
+            if (sec <= 0) {
+                clearInterval(timerId);
+                overlay.classList.add('motivation-overlay--hidden');
+            }
+        }, 1000);
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function() {
+                clearInterval(timerId);
+                overlay.classList.add('motivation-overlay--hidden');
+            });
+        }
+    })();
+
     (function() {
         var chartLabels = {{ chart_labels_json|safe }};
         var chartWeight = {{ chart_weight_json|safe }};

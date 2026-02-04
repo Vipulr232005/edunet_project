@@ -1,4 +1,4 @@
-/* Home / landing page – hero, blocks, placeholders */
+/* Home / landing page – hero, blocks, image placeholders */
 .home-block {
     max-width: 1100px;
     margin-left: auto;
@@ -22,8 +22,7 @@
     color: var(--text-muted-soft);
 }
 
-/* Image placeholders – replace with <img src="..." alt="..." class="img-fluid rounded-4"> */
-/* Image placeholders: add <img src="..." alt="..." class="img-fluid rounded-4"> inside; remove .home-img-placeholder class when using real image */
+/* Image placeholders – add <img src="..." alt="..." class="img-fluid rounded-4"> when ready */
 .home-img-placeholder {
     min-height: 200px;
     background: linear-gradient(135deg, #ffe4ef 0%, #ffcede 50%, #e7d6ff 100%);
@@ -38,9 +37,19 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
+    display: block;
 }
 .home-img-hero {
     min-height: 280px;
+    height: 280px;
+}
+.home-img-hero .home-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 20px;
 }
 .home-img-affirmations,
 .home-img-understanding,

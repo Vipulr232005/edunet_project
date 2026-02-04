@@ -53,9 +53,9 @@
                 <a href="{% url 'tracker:wellness' %}" class="drawer-link {% if request.resolver_match.url_name == 'wellness' %}active{% endif %}">
                     <i class="bi bi-heart-pulse-fill me-2"></i>Wellness
                 </a>
-                <form method="post" action="{% url 'tracker:logout' %}" class="drawer-logout">
+                <form method="post" action="{% url 'tracker:logout' %}" id="logoutForm" class="drawer-logout">
                     {% csrf_token %}
-                    <button type="submit" class="drawer-link drawer-logout-btn">
+                    <button type="button" class="drawer-link drawer-logout-btn" id="logoutBtn" aria-haspopup="dialog" aria-controls="logoutConfirmModal">
                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                     </button>
                 </form>
@@ -69,6 +69,21 @@
             {% endif %}
         </nav>
     </aside>
+
+    <!-- Logout confirmation modal -->
+    <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-body text-center py-4">
+                    <p class="mb-4 fw-medium" id="logoutConfirmLabel">Are you sure you want to logout?</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal" id="logoutCancelBtn">No</button>
+                        <button type="button" class="btn rounded-pill px-3" id="logoutConfirmYesBtn" style="background:#ff9ebc;border:none;color:#5b2941;">Yes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <main class="main-with-nav">
         {% block content %}{% endblock %}
@@ -97,6 +112,43 @@
             if (btn) btn.addEventListener('click', openDrawer);
             if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
             if (overlay) overlay.addEventListener('click', closeDrawer);
+        })();
+
+        // Logout confirmation: only logout after user confirms "Yes"
+        (function() {
+            var logoutBtn = document.getElementById('logoutBtn');
+            var logoutForm = document.getElementById('logoutForm');
+            var logoutModal = document.getElementById('logoutConfirmModal');
+            var logoutYesBtn = document.getElementById('logoutConfirmYesBtn');
+            var logoutCancelBtn = document.getElementById('logoutCancelBtn');
+            var drawer = document.getElementById('navDrawer');
+            var drawerOverlay = document.getElementById('drawerOverlay');
+
+            if (logoutBtn && logoutForm && logoutModal) {
+                logoutBtn.addEventListener('click', function() {
+                    var modal = bootstrap.Modal.getOrCreateInstance(logoutModal);
+                    modal.show();
+                });
+                if (logoutYesBtn) {
+                    logoutYesBtn.addEventListener('click', function() {
+                        if (drawer) drawer.classList.remove('drawer-open');
+                        if (drawerOverlay) {
+                            drawerOverlay.classList.remove('drawer-overlay-visible');
+                            drawerOverlay.setAttribute('aria-hidden', 'true');
+                        }
+                        document.body.style.overflow = '';
+                        var modal = bootstrap.Modal.getInstance(logoutModal);
+                        if (modal) modal.hide();
+                        logoutForm.submit();
+                    });
+                }
+                if (logoutCancelBtn) {
+                    logoutCancelBtn.addEventListener('click', function() {
+                        var modal = bootstrap.Modal.getInstance(logoutModal);
+                        if (modal) modal.hide();
+                    });
+                }
+            }
         })();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

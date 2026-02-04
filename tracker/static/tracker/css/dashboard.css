@@ -267,3 +267,78 @@
         flex: 1 1 100%;
     }
 }
+
+/* 5-min stretch modal – small girl stretching icon over timer */
+.stretch-timer-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.stretch-icon-small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+.stretch-icon-svg,
+.stretch-icon-img {
+    width: 40px;
+    height: 40px;
+    display: block;
+    object-fit: contain;
+}
+
+/* Motivation popup – shown 5 sec before dashboard */
+.motivation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(255, 245, 247, 0.97);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+.motivation-overlay.motivation-overlay--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.motivation-card {
+    max-width: 420px;
+    width: 100%;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(255, 143, 177, 0.3);
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid rgba(255, 182, 193, 0.4);
+}
+.motivation-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+.motivation-title {
+    font-weight: 600;
+    color: #6b3350;
+}
+.motivation-text {
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+.motivation-countdown {
+    font-size: 0.9rem;
+}
+.motivation-continue-btn {
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+}
+.motivation-continue-btn:hover {
+    background: #ffafcc !important;
+    color: #5b2941;
+}
