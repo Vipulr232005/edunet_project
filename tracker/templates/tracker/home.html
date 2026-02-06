@@ -24,13 +24,13 @@
                     <a href="{% url 'tracker:login' %}" class="btn btn-home-primary rounded-pill px-4">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Log in
                     </a>
-                    <a href="{% url 'tracker:signup' %}" class="btn btn-home-outline rounded-pill px-4">
+                    <a href="{% url 'tracker:signup' %}" class="btn btn-home-secondary rounded-pill px-4">
                         <i class="bi bi-person-plus me-2"></i>Sign up
                     </a>
                 </div>
                 {% else %}
                 <a href="{% url 'tracker:dashboard' %}" class="btn btn-home-primary rounded-pill px-4">
-                    <i class="bi bi-house-door-heart me-2"></i>Go to Dashboard
+                    <i class="bi bi-grid me-2"></i>Go to Dashboard
                 </a>
                 {% endif %}
             </div>
@@ -38,205 +38,199 @@
     </div>
 </section>
 
-<!-- Daily Affirmations -->
+<!-- Daily Affirmations (image left) -->
 <section class="home-block home-affirmations py-5">
     <div class="container">
         <div class="row g-4 align-items-center">
-            <div class="col-lg-4">
+            <div class="col-lg-4 order-lg-1">
                 <div class="home-img-placeholder home-img-affirmations" aria-hidden="true">
-                    <!-- Image placeholder -->
+                    <img src="{% static 'tracker/images/affirmations.png' %}" alt="Daily Affirmations" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
                 </div>
             </div>
-            <div class="col-lg-8">
-                <h2 class="home-section-title mb-4">🌿 Daily Affirmations</h2>
-                <ul class="home-affirm-list">
-                    <li><span class="affirm-icon">🌷</span> My body is capable of healing and balance.</li>
-                    <li><span class="affirm-icon">🌷</span> I choose nourishment over restriction.</li>
-                    <li><span class="affirm-icon">🌷</span> Progress matters more than perfection.</li>
-                    <li><span class="affirm-icon">🌷</span> My hormones do not define my worth.</li>
-                    <li><span class="affirm-icon">🌷</span> I listen to my body with patience and kindness.</li>
+            <div class="col-lg-8 order-lg-2">
+                <h2 class="home-section-title mb-3">🌿 Daily Affirmations</h2>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">🌷 My body is capable of healing and balance.</li>
+                    <li class="mb-2">🌷 I choose nourishment over restriction.</li>
+                    <li class="mb-2">🌷 Progress matters more than perfection.</li>
+                    <li class="mb-2">🌷 My hormones do not define my worth.</li>
+                    <li class="mb-2">🌷 I listen to my body with patience and kindness.</li>
                 </ul>
-                <p class="home-tip small text-muted mt-3">💕 Tip: Rotate these affirmations daily for engagement.</p>
+                <p class="small text-muted mt-3 mb-0">Tip: You can rotate these affirmations daily for engagement 💕</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Understanding PCOD -->
+<!-- Understanding PCOD (image right – zig-zag) -->
 <section class="home-block home-understanding py-5">
     <div class="container">
         <div class="row g-4 align-items-center">
-            <div class="col-lg-6">
-                <div class="home-img-placeholder home-img-understanding" aria-hidden="true">
-                    <!-- Image placeholder -->
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <h2 class="home-section-title mb-3">💖 Understanding PCOD <span class="home-subtitle">(Positive Framing)</span></h2>
-                <p class="mb-3">PCOD is your body's way of asking for care, consistency, and compassion. With the right balance of nutrition, movement, rest, and mindset, many symptoms can be managed naturally and effectively.</p>
-                <p class="home-highlight">✨ You don't need to "fix" yourself — you need to support yourself.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Wellness Philosophy -->
-<section class="home-block home-philosophy py-5">
-    <div class="container">
-        <div class="row g-4 align-items-center">
-            <div class="col-lg-5">
-                <div class="home-img-placeholder home-img-philosophy" aria-hidden="true">
-                    <!-- Image placeholder -->
-                </div>
-            </div>
-            <div class="col-lg-7">
-                <h2 class="home-section-title mb-3">🧘‍♀️ Wellness Philosophy</h2>
-                <h3 class="home-subheading mb-3">Balance over burnout</h3>
-                <p class="mb-4">Healing doesn't mean extreme diets or exhausting workouts.</p>
-                <ul class="home-check-list">
-                    <li><i class="bi bi-check2-circle me-2"></i>Gentle movement</li>
-                    <li><i class="bi bi-check2-circle me-2"></i>Nourishing food</li>
-                    <li><i class="bi bi-check2-circle me-2"></i>Restful sleep</li>
-                    <li><i class="bi bi-check2-circle me-2"></i>Emotional well-being</li>
-                </ul>
-                <p class="mt-3">When these align, your body responds beautifully.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Lifestyle Encouragement -->
-<section class="home-block home-lifestyle py-5">
-    <div class="container">
-        <div class="row g-4 align-items-center">
             <div class="col-lg-6 order-lg-2">
-                <div class="home-img-placeholder home-img-lifestyle" aria-hidden="true">
-                    <!-- Image placeholder -->
+                <div class="home-img-placeholder home-img-understanding" aria-hidden="true">
+                    <img src="{% static 'tracker/images/understanding.png' %}" alt="Understanding" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
                 </div>
             </div>
             <div class="col-lg-6 order-lg-1">
+                <h2 class="home-section-title mb-3">💖 Understanding PCOD</h2>
+                <p class="mb-3">PCOD is your body's way of asking for care, consistency, and compassion. With the right balance of nutrition, movement, rest, and mindset, many symptoms can be managed naturally and effectively.</p>
+                <p class="home-highlight mb-0">✨ You don't need to "fix" yourself — you need to support yourself.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Wellness Philosophy (image left – zig-zag) -->
+<section class="home-block home-philosophy py-5">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-5 order-lg-1">
+                <div class="home-img-placeholder home-img-philosophy" aria-hidden="true"></div>
+            </div>
+            <div class="col-lg-7 order-lg-2">
+                <h2 class="home-section-title mb-3">🧘‍♀️ Wellness Philosophy</h2>
+                <p class="home-subheading mb-2">Balance over burnout</p>
+                <p class="mb-3">Healing doesn't mean extreme diets or exhausting workouts.</p>
+                <ul class="mb-2">
+                    <li>✔ Gentle movement</li>
+                    <li>✔ Nourishing food</li>
+                    <li>✔ Restful sleep</li>
+                    <li>✔ Emotional well-being</li>
+                </ul>
+                <p class="mb-0">When these align, your body responds beautifully.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Lifestyle Encouragement (image right – zig-zag) -->
+<section class="home-block home-lifestyle py-5">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-5 order-lg-2">
+                <div class="home-img-placeholder home-img-lifestyle" aria-hidden="true"></div>
+            </div>
+            <div class="col-lg-7 order-lg-1">
                 <h2 class="home-section-title mb-3">🌸 Lifestyle Encouragement</h2>
-                <p class="mb-4">You don't have to do everything at once.</p>
-                <p class="fw-semibold mb-2">💗 Start with:</p>
-                <ul class="home-start-list">
+                <p class="mb-2">You don't have to do everything at once.</p>
+                <p class="mb-2">💗 Start with:</p>
+                <ul class="mb-2">
                     <li>A short walk</li>
                     <li>One healthy meal</li>
                     <li>A glass of water</li>
                     <li>A deep breath</li>
                     <li>A kind thought about yourself</li>
                 </ul>
-                <p class="home-highlight mt-4">Healing happens in moments, not miracles.</p>
+                <p class="home-highlight mb-0">Healing happens in moments, not miracles.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Food & Nourishment -->
+<!-- Food & Nourishment (image left – zig-zag) -->
 <section class="home-block home-food py-5">
     <div class="container">
         <div class="row g-4 align-items-center">
-            <div class="col-lg-4">
+            <div class="col-lg-4 order-lg-1">
                 <div class="home-img-placeholder home-img-food" aria-hidden="true">
-                    <!-- Image placeholder -->
+                    <img src="{% static 'tracker/images/food.png' %}" alt="Food & Nourishment" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
                 </div>
             </div>
-            <div class="col-lg-8">
+            <div class="col-lg-8 order-lg-2">
                 <h2 class="home-section-title mb-3">🍓 Food & Nourishment Motivation</h2>
                 <p class="mb-3">Food is not the enemy. Food is fuel, comfort, and care.</p>
                 <p class="mb-2">Choose foods that:</p>
-                <ul class="home-bullet-list mb-3">
+                <ul class="mb-3">
                     <li>Support hormone balance</li>
                     <li>Reduce inflammation</li>
                     <li>Make you feel energized, not restricted</li>
                 </ul>
-                <p class="home-highlight">✨ Eating well is an act of self-love, not punishment.</p>
+                <p class="home-highlight mb-0">✨ Eating well is an act of self-love, not punishment.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Movement Motivation -->
+<!-- Movement Motivation (image right – zig-zag) -->
 <section class="home-block home-movement py-5">
     <div class="container">
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-2">
                 <div class="home-img-placeholder home-img-movement" aria-hidden="true">
-                    <!-- Image placeholder -->
+                    <img src="{% static 'tracker/images/moment.png' %}" alt="Movement" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
                 </div>
             </div>
             <div class="col-lg-7 order-lg-1">
                 <h2 class="home-section-title mb-3">💃 Movement Motivation</h2>
                 <p class="mb-3">Exercise for PCOD is not about burning calories. It's about boosting mood, improving circulation, and supporting hormones.</p>
                 <p class="mb-2">Dance. Stretch. Walk. Strength train.</p>
-                <p class="home-highlight">Move in ways that feel joyful — your body remembers joy 💃✨</p>
+                <p class="home-highlight mb-0">Move in ways that feel joyful — your body remembers joy 💃✨</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Mental Health & Self-Compassion -->
+<!-- Mental Health & Self-Compassion (image left – zig-zag) -->
 <section class="home-block home-mental py-5">
     <div class="container">
         <div class="row g-4 align-items-center">
-            <div class="col-lg-4">
-                <div class="home-img-placeholder home-img-mental" aria-hidden="true">
-                    <!-- Image placeholder -->
-                </div>
+            <div class="col-lg-5 order-lg-1">
+                <div class="home-img-placeholder home-img-mental" aria-hidden="true"></div>
             </div>
-            <div class="col-lg-8">
+            <div class="col-lg-7 order-lg-2">
                 <h2 class="home-section-title mb-3">🌙 Mental Health & Self-Compassion</h2>
-                <p class="mb-4">PCOD can be emotionally overwhelming — and that's okay.</p>
+                <p class="mb-3">PCOD can be emotionally overwhelming — and that's okay.</p>
                 <p class="mb-2">You are allowed to:</p>
-                <ul class="home-heart-list">
-                    <li><span class="heart-icon">💗</span> Feel tired</li>
-                    <li><span class="heart-icon">💗</span> Take breaks</li>
-                    <li><span class="heart-icon">💗</span> Ask for support</li>
-                    <li><span class="heart-icon">💗</span> Go at your own pace</li>
+                <ul class="mb-0">
+                    <li>💗 Feel tired</li>
+                    <li>💗 Take breaks</li>
+                    <li>💗 Ask for support</li>
+                    <li>💗 Go at your own pace</li>
                 </ul>
-                <p class="home-highlight mt-4">Healing includes your mind, not just your body.</p>
+                <p class="mt-3 mb-0">Healing includes your mind, not just your body.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- What we do (app features) -->
-<section class="home-block home-section py-5">
+<!-- What we do -->
+<section class="home-block py-5">
     <div class="container">
         <h2 class="home-section-title text-center mb-4">What we do</h2>
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
-                <div class="home-card card border-0 h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="home-card-icon mb-2"><i class="bi bi-heart-half"></i></div>
-                        <h5 class="fw-semibold mb-2">Symptom tracking</h5>
-                        <p class="small mb-0 text-muted">Log acne, fatigue, bloating, and sleep quality so you can spot patterns over time.</p>
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-heart fs-2 mb-2" style="color:#e0527b;"></i>
+                        <h3 class="h6 fw-semibold mb-2">Cycle awareness</h3>
+                        <p class="small mb-0">Track your cycle day and see how it connects to how you feel each day.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
-                <div class="home-card card border-0 h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="home-card-icon mb-2"><i class="bi bi-calendar3"></i></div>
-                        <h5 class="fw-semibold mb-2">Cycle awareness</h5>
-                        <p class="small mb-0 text-muted">Track your cycle day and see how it connects to how you feel each day.</p>
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                    <div class="card-body text-center">
+                        <i class="bi bi-droplet-half fs-2 mb-2" style="color:#e0527b;"></i>
+                        <h3 class="h6 fw-semibold mb-2">Symptoms & mood</h3>
+                        <p class="small mb-0">Log symptoms and mood so you can spot patterns over time.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
-                <div class="home-card card border-0 h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="home-card-icon mb-2"><i class="bi bi-graph-up"></i></div>
-                        <h5 class="fw-semibold mb-2">Weight & mood</h5>
-                        <p class="small mb-0 text-muted">Simple charts for weight and mood so you can see your wellness glow-up.</p>
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                    <div class="card-body text-center">
+                        <i class="bi bi-graph-up fs-2 mb-2" style="color:#e0527b;"></i>
+                        <h3 class="h6 fw-semibold mb-2">Insights</h3>
+                        <p class="small mb-0">See your data in one place and understand your body better.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">
-                <div class="home-card card border-0 h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="home-card-icon mb-2"><i class="bi bi-shield-lock"></i></div>
-                        <h5 class="fw-semibold mb-2">Private & yours</h5>
-                        <p class="small mb-0 text-muted">Your data stays private. Only you see your logs—no sharing, no ads.</p>
+                <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                    <div class="card-body text-center">
+                        <i class="bi bi-heart-pulse fs-2 mb-2" style="color:#e0527b;"></i>
+                        <h3 class="h6 fw-semibold mb-2">Wellness</h3>
+                        <p class="small mb-0">Small daily habits that support your PCOD journey.</p>
                     </div>
                 </div>
             </div>
@@ -245,18 +239,22 @@
 </section>
 
 <!-- Closing CTA -->
-<section class="home-block home-cta py-5 text-center">
-    <div class="container">
-        <p class="home-cta-line mb-2">✨ Your journey is unique.</p>
-        <p class="home-cta-line mb-2">✨ Your body is powerful.</p>
-        <p class="home-cta-line mb-4">✨ Your healing is possible.</p>
-        <h2 class="home-cta-heading mb-4">Track. Learn. Heal. Thrive.</h2>
-        <p class="mb-4">Welcome to your PCOD wellness space 🌸</p>
-        <div class="home-img-placeholder home-img-cta mx-auto" aria-hidden="true">
-            <!-- Image placeholder -->
+<section class="home-block home-cta py-5">
+    <div class="container text-center">
+        <p class="mb-2">✨ Your journey is unique.</p>
+        <p class="mb-2">✨ Your body is powerful.</p>
+        <p class="mb-4">✨ Your healing is possible.</p>
+        <p class="home-section-title mb-3">Track. Learn. Heal. Thrive.</p>
+        <div class="d-flex justify-content-center mb-4">
+            <div class="home-img-placeholder home-img-cta" aria-hidden="true" style="max-width: 320px; width: 100%; min-height: 160px;">
+                <!-- Add image: <img src="{% static 'tracker/images/your-image.png' %}" alt="" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;"> -->
+            </div>
         </div>
+        <p class="mb-4">Welcome to your PCOD wellness space 🌸</p>
         {% if not user.is_authenticated %}
-        <a href="{% url 'tracker:signup' %}" class="btn btn-home-primary rounded-pill px-4 mt-4">Get started</a>
+        <a href="{% url 'tracker:signup' %}" class="btn btn-home-primary rounded-pill px-4">Get started</a>
+        {% else %}
+        <a href="{% url 'tracker:dashboard' %}" class="btn btn-home-primary rounded-pill px-4">Go to Dashboard</a>
         {% endif %}
     </div>
 </section>
