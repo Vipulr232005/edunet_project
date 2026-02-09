@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 from .forms import SignUpForm, DailyLogForm
-from .models import DailyLog
+from .models import DailyLog, DietDayLog
 
 MOTIVATIONS = [
     "Today, you choose foods that help your hormones feel safe and supported.",
@@ -111,6 +111,14 @@ def dashboard(request):
     def default(val, d):
         return val if val is not None else d
 
+    # Show the motivation popup only once per login/session.
+    # We store a flag in the Django session so that after the first
+    # successful render of the dashboard, the popup is not shown again
+    # until the user logs out (which clears the session).
+    show_motivation = not request.session.get('motivation_shown', False)
+    if show_motivation:
+        request.session['motivation_shown'] = True
+
     if today_log:
         symptoms_count = sum(1 for x in [
             today_log.acne_level, today_log.fatigue_level,
@@ -120,6 +128,7 @@ def dashboard(request):
             symptoms_count = 1
         context = {
             'username': user.username,
+            'show_motivation': show_motivation,
             'daily_motivation': random.choice(MOTIVATIONS),
             'today_log': today_log,
             'log_form': DailyLogForm(instance=today_log),
@@ -143,6 +152,7 @@ def dashboard(request):
     else:
         context = {
             'username': user.username,
+            'show_motivation': show_motivation,
             'daily_motivation': random.choice(MOTIVATIONS),
             'today_log': None,
             'log_form': DailyLogForm(),
@@ -294,3 +304,150 @@ def insights(request):
         'log_count': log_count,
     }
     return render(request, 'tracker/insights.html', context)
+
+
+# Diet plan: 7 days (Monday=Day1 .. Sunday=Day7). Each day has 7 slots.
+# Approximate macros per slot (protein_g, carbs_g, kcal) for chart.
+DIET_SLOT_MACROS = {
+    'early_morning': (5, 3, 80),
+    'breakfast': (18, 35, 380),
+    'mid_morning': (1, 5, 30),
+    'lunch': (35, 45, 520),
+    'evening_snack': (0.5, 15, 70),
+    'dinner': (30, 40, 450),
+    'bedtime': (0, 0, 5),
+}
+
+DIET_PLAN = [
+    # Day 1 (Monday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM – Early Morning', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM – Breakfast', 'foods': 'Moong dal cheela (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM – Mid-Morning', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM – Lunch', 'foods': 'Chapati (2), Chicken gravy (150 g), Vegetables, Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM – Evening Snack', 'foods': 'Detox drink, 1 fruit (apple / orange / watermelon / guava)'},
+        {'slot': 'dinner', 'label': '07:00 PM – Dinner', 'foods': 'Sprout salad, Ragi dosa (2), Grilled chicken (100 g)'},
+        {'slot': 'bedtime', 'label': '08:00 PM – Bedtime', 'foods': 'Cinnamon water'},
+    ],
+    # Day 2 (Tuesday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Wheat roti (2), Dal curry, Egg whites (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Brown rice (6 tbsp), Sambar, Kidney beans curry (50 g), Steamed chicken breast (150 g), Cucumber salad (½ cup)'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': 'Chicken sweet corn soup (1 bowl)'},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+    # Day 3 (Wednesday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Paneer stuffed roti (2), Egg white (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Brown rice (6 tbsp), Grilled paneer (150 g), Bhindi masala, Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': 'Ragi dosa (2), Paneer bhurji (150 g)'},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+    # Day 4 (Thursday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Chapati (2), Green peas curry (½ cup), 1 egg + 1 egg white'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Chapati (2), Egg bhurji (150 g), Vegetable salad, Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': 'Palak dosa (1), Egg bhurji, Vegetables'},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+    # Day 5 (Friday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Wheat cheela / Wheat roti (2), Cowpea curry, Egg white (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Veg pulav rice (6 tbsp), Soya chunk curry (100 g), Chicken roast (150 g), Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': 'Boiled black channa (½ cup), Tomato & coriander, Chapati (1), Dal curry'},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+    # Day 6 (Saturday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Overnight oats, Seeds (pumpkin + sunflower + flaxseed), Egg whites (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Brown rice (6 tbsp), Grilled paneer (150 g), Bhindi masala, Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': 'Wheat dosa (2), Chicken / Fish (150 g), Salad'},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+    # Day 7 (Sunday)
+    [
+        {'slot': 'early_morning', 'label': '07:00 AM', 'foods': 'Detox drink, Almonds (6–8), Walnuts (3–4)'},
+        {'slot': 'breakfast', 'label': '08:30 AM', 'foods': 'Moong dal cheela (2)'},
+        {'slot': 'mid_morning', 'label': '10:30 AM', 'foods': 'Detox drink, Cucumber (1) / Carrot (1)'},
+        {'slot': 'lunch', 'label': '01:00 PM', 'foods': 'Brown rice (6 tbsp), Chicken (150 g), Soya bhurji, Curd'},
+        {'slot': 'evening_snack', 'label': '04:00 PM', 'foods': 'Detox drink, 1 fruit'},
+        {'slot': 'dinner', 'label': '07:00 PM', 'foods': "Roti / Chapati (2), Lady's finger sabji, Paneer gravy (150 g)"},
+        {'slot': 'bedtime', 'label': '08:00 PM', 'foods': 'Cinnamon water'},
+    ],
+]
+
+WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+
+@login_required
+def diet_plan(request):
+    """Diet plan page: show today's plan (Day N by weekday), tick slots, graph of protein/carbs/energy."""
+    user = request.user
+    today = timezone.localdate()
+    weekday_index = today.weekday()  # 0=Monday, 6=Sunday
+    day_number = weekday_index + 1  # Day 1 = Monday, ..., Day 7 = Sunday
+    day_plan = DIET_PLAN[weekday_index]
+    day_name = WEEKDAY_NAMES[weekday_index]
+
+    log, _ = DietDayLog.objects.get_or_create(user=user, date=today, defaults={})
+
+    # Add checked flag for each slot for the template
+    for item in day_plan:
+        item['checked'] = getattr(log, item['slot'], False)
+
+    if request.method == 'POST':
+        for slot_key in DIET_SLOT_MACROS.keys():
+            setattr(log, slot_key, slot_key in request.POST)
+        log.save()
+        return redirect('tracker:diet_plan')
+
+    # Last 14 days for chart: protein, carbs, energy from ticked slots
+    last_14_logs = (
+        DietDayLog.objects.filter(user=user, date__lte=today)
+        .order_by('-date')[:14]
+    )
+    last_14_list = list(last_14_logs)
+    last_14_list.reverse()
+    chart_labels = [d.date.strftime('%d %b') for d in last_14_list]
+    chart_protein = []
+    chart_carbs = []
+    chart_energy = []
+    for d in last_14_list:
+        p, c, e = 0, 0, 0
+        for slot_key, (mp, mc, me) in DIET_SLOT_MACROS.items():
+            if getattr(d, slot_key):
+                p += mp
+                c += mc
+                e += me
+        chart_protein.append(p)
+        chart_carbs.append(c)
+        chart_energy.append(e)
+
+    context = {
+        'username': user.username,
+        'day_number': day_number,
+        'day_name': day_name,
+        'day_plan': day_plan,
+        'log': log,
+        'today': today,
+        'chart_labels_json': json.dumps(chart_labels),
+        'chart_protein_json': json.dumps(chart_protein),
+        'chart_carbs_json': json.dumps(chart_carbs),
+        'chart_energy_json': json.dumps(chart_energy),
+    }
+    return render(request, 'tracker/diet_plan.html', context)

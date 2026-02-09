@@ -53,6 +53,9 @@
                 <a href="{% url 'tracker:wellness' %}" class="drawer-link {% if request.resolver_match.url_name == 'wellness' %}active{% endif %}">
                     <i class="bi bi-heart-pulse-fill me-2"></i>Wellness
                 </a>
+                <a href="{% url 'tracker:diet_plan' %}" class="drawer-link {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}">
+                    <i class="bi bi-journal-richtext me-2"></i>Diet Plan
+                </a>
                 <form method="post" action="{% url 'tracker:logout' %}" id="logoutForm" class="drawer-logout">
                     {% csrf_token %}
                     <button type="button" class="drawer-link drawer-logout-btn" id="logoutBtn" aria-haspopup="dialog" aria-controls="logoutConfirmModal">
@@ -126,6 +129,13 @@
 
             if (logoutBtn && logoutForm && logoutModal) {
                 logoutBtn.addEventListener('click', function() {
+                    // Close the hamburger drawer first, then show the confirmation modal
+                    if (drawer) drawer.classList.remove('drawer-open');
+                    if (drawerOverlay) {
+                        drawerOverlay.classList.remove('drawer-overlay-visible');
+                        drawerOverlay.setAttribute('aria-hidden', 'true');
+                    }
+                    document.body.style.overflow = '';
                     var modal = bootstrap.Modal.getOrCreateInstance(logoutModal);
                     modal.show();
                 });

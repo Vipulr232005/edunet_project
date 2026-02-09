@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import DailyLog
+from .models import DailyLog, DietDayLog
 
 
 @admin.register(DailyLog)
@@ -18,6 +18,15 @@ class DailyLogAdmin(admin.ModelAdmin):
         if not request.user.is_superuser:
             return qs.filter(user=request.user)
         return qs
+
+
+@admin.register(DietDayLog)
+class DietDayLogAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'early_morning', 'breakfast', 'mid_morning', 'lunch', 'evening_snack', 'dinner', 'bedtime')
+    list_filter = ('date',)
+    search_fields = ('user__username',)
+    date_hierarchy = 'date'
+    ordering = ('-date',)
 
 
 # Unregister default User admin so we can add "new users today" tracking

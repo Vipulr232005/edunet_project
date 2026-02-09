@@ -32,3 +32,29 @@ class DailyLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} – {self.date}"
+
+
+class DietDayLog(models.Model):
+    """Tracks which diet plan slots the user completed each day (one row per user per date)."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='diet_day_logs',
+    )
+    date = models.DateField(db_index=True)
+    early_morning = models.BooleanField(default=False)
+    breakfast = models.BooleanField(default=False)
+    mid_morning = models.BooleanField(default=False)
+    lunch = models.BooleanField(default=False)
+    evening_snack = models.BooleanField(default=False)
+    dinner = models.BooleanField(default=False)
+    bedtime = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date'], name='unique_user_diet_date'),
+        ]
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} diet – {self.date}"

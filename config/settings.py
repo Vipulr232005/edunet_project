@@ -6,6 +6,13 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env from project root (for RESEND_API_KEY, etc.)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret-change-in-production')
 
 DEBUG = True
@@ -85,3 +92,17 @@ LOGIN_URL = 'tracker:login'
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
+
+# Email (Resend SMTP for password reset)
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+if RESEND_API_KEY:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.resend.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'resend'
+    EMAIL_HOST_PASSWORD = RESEND_API_KEY
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'PCOD GirlCare <onboarding@resend.dev>')
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'PCOD GirlCare <onboarding@resend.dev>'
