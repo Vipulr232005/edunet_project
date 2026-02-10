@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import DailyLog
+from .models import DailyLog, NotificationPreference
 
 
 class DailyLogForm(forms.ModelForm):
@@ -60,3 +60,23 @@ class SignUpForm(UserCreationForm):
         if username and User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError('This username is already taken. Please choose another.')
         return username
+
+
+class NotificationPreferenceForm(forms.ModelForm):
+    """Notification toggles – only for logged-in user."""
+
+    class Meta:
+        model = NotificationPreference
+        fields = (
+            'events_workshops', 'health_tips', 'app_updates',
+            'breakfast_reminder', 'water_reminder', 'stretch_reminder', 'daily_log_reminder',
+        )
+        widgets = {
+            'events_workshops': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'health_tips': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'app_updates': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'breakfast_reminder': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'water_reminder': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'stretch_reminder': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'daily_log_reminder': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

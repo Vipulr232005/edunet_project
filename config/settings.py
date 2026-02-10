@@ -93,7 +93,9 @@ CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
 
-# Email (Resend SMTP for password reset)
+# Email (Resend SMTP for password reset + notifications)
+# Alternative Gmail: EMAIL_HOST='smtp.gmail.com', EMAIL_PORT=587, EMAIL_USE_TLS=True,
+# EMAIL_HOST_USER='your@gmail.com', EMAIL_HOST_PASSWORD=os.environ.get('GMAIL_APP_PASSWORD')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 if RESEND_API_KEY:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

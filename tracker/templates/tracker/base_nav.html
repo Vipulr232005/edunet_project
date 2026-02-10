@@ -42,7 +42,7 @@
             </a>
             {% if user.is_authenticated %}
                 <a href="{% url 'tracker:dashboard' %}" class="drawer-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="bi bi-house-door-heart me-2"></i>Dashboard
+                    <i class="bi bi-grid me-2" aria-hidden="true"></i>Dashboard
                 </a>
                 <a href="{% url 'tracker:cycle_tracker' %}" class="drawer-link {% if request.resolver_match.url_name == 'cycle_tracker' %}active{% endif %}">
                     <i class="bi bi-calendar3 me-2"></i>Cycle Tracker
@@ -55,6 +55,9 @@
                 </a>
                 <a href="{% url 'tracker:diet_plan' %}" class="drawer-link {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}">
                     <i class="bi bi-journal-richtext me-2"></i>Diet Plan
+                </a>
+                <a href="{% url 'tracker:notification_settings' %}" class="drawer-link {% if request.resolver_match.url_name == 'notification_settings' %}active{% endif %}">
+                    <i class="bi bi-bell me-2"></i>Notification settings
                 </a>
                 <form method="post" action="{% url 'tracker:logout' %}" id="logoutForm" class="drawer-logout">
                     {% csrf_token %}

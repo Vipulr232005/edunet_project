@@ -230,15 +230,55 @@
                 </div>
             </div>
 
-            <!-- Charts + Quick actions -->
+            <!-- Daily myths + Quick actions -->
             <div class="row g-4">
                 <div class="col-lg-8">
                     <div class="card">
                         <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-semibold">Weight & mood glow‑up</h5>
+                            <h5 class="mb-0 fw-semibold">
+                                <i class="bi bi-question-diamond me-2"></i>PCOD daily myth check‑in
+                            </h5>
+                            <span class="badge rounded-pill bg-light text-muted small">New set every day</span>
                         </div>
                         <div class="card-body p-3">
-                            <canvas id="trendsChart" height="100"></canvas>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="myth-card h-100 p-3 rounded-3" data-correct="{{ daily_basic_myth.answer|yesno:'true,false' }}">
+                                        <p class="small text-uppercase text-muted mb-1">Basic myth of the day</p>
+                                        <p class="fw-semibold mb-3">{{ daily_basic_myth.text }}</p>
+                                        <div class="d-flex gap-2 mb-2">
+                                            <button type="button" class="btn btn-sm btn-outline-success myth-btn" data-myth-id="basic" data-answer="true">
+                                                True
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger myth-btn" data-myth-id="basic" data-answer="false">
+                                                False
+                                            </button>
+                                        </div>
+                                        <p class="small myth-result mb-1 d-none" id="myth-result-basic"></p>
+                                        <p class="small text-muted myth-explanation mb-0 d-none" id="myth-explanation-basic">
+                                            {{ daily_basic_myth.fact }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="myth-card h-100 p-3 rounded-3" data-correct="{{ daily_hard_myth.answer|yesno:'true,false' }}">
+                                        <p class="small text-uppercase text-muted mb-1">Hard myth of the day</p>
+                                        <p class="fw-semibold mb-3">{{ daily_hard_myth.text }}</p>
+                                        <div class="d-flex gap-2 mb-2">
+                                            <button type="button" class="btn btn-sm btn-outline-success myth-btn" data-myth-id="hard" data-answer="true">
+                                                True
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger myth-btn" data-myth-id="hard" data-answer="false">
+                                                False
+                                            </button>
+                                        </div>
+                                        <p class="small myth-result mb-1 d-none" id="myth-result-hard"></p>
+                                        <p class="small text-muted myth-explanation mb-0 d-none" id="myth-explanation-hard">
+                                            {{ daily_hard_myth.fact }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -320,7 +360,6 @@
 
 {% endblock %}
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
     // Motivation popup: show for 5 sec, then hide and show dashboard
     (function() {
@@ -345,57 +384,49 @@
         }
     })();
 
+    // Daily myth questions – reveal explanation on click
     (function() {
-        var chartLabels = {{ chart_labels_json|safe }};
-        var chartWeight = {{ chart_weight_json|safe }};
-        var chartMood = {{ chart_mood_json|safe }};
-        var el = document.getElementById('trendsChart');
-        if (!el) return;
-        var ctx = el.getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartLabels,
-                datasets: [
-                    {
-                        label: 'Weight (kg)',
-                        data: chartWeight,
-                        borderColor: '#ff9ebc',
-                        backgroundColor: 'rgba(255, 158, 188, 0.15)',
-                        tension: 0.4,
-                        spanGaps: true
-                    },
-                    {
-                        label: 'Mood (1–10)',
-                        data: chartMood,
-                        borderColor: '#b388ff',
-                        backgroundColor: 'rgba(179,136,255,0.18)',
-                        tension: 0.4,
-                        yAxisID: 'y1',
-                        spanGaps: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        title: { display: true, text: 'Weight' }
-                    },
-                    y1: {
-                        position: 'right',
-                        beginAtZero: true,
-                        min: 0,
-                        max: 10,
-                        grid: { drawOnChartArea: false },
-                        title: { display: true, text: 'Mood' }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { usePointStyle: true } }
-                }
+        var buttons = document.querySelectorAll('.myth-btn');
+        if (!buttons.length) return;
+
+        function handleClick(btn) {
+            var mythId = btn.getAttribute('data-myth-id');
+            var answer = btn.getAttribute('data-answer') === 'true';
+            var card = btn.closest('.myth-card');
+            if (!card) return;
+            var correct = card.getAttribute('data-correct') === 'true';
+            var explanation = document.getElementById('myth-explanation-' + mythId);
+            var resultEl = document.getElementById('myth-result-' + mythId);
+
+            // Reveal explanation text
+            if (explanation) {
+                explanation.classList.remove('d-none');
             }
+
+            // Disable both buttons for this myth card
+            var siblingButtons = card.querySelectorAll('.myth-btn');
+            siblingButtons.forEach(function(b) {
+                b.disabled = true;
+            });
+
+            // Show friendly feedback
+            if (!resultEl) return;
+            resultEl.classList.remove('d-none');
+            if (answer === correct) {
+                resultEl.classList.remove('text-danger');
+                resultEl.classList.add('text-success');
+                resultEl.textContent = "You got it right 💗 Your instincts are on point.";
+            } else {
+                resultEl.classList.remove('text-success');
+                resultEl.classList.add('text-danger');
+                resultEl.textContent = "Not quite, and that's okay. Read the note below — you're learning, not failing 🌸";
+            }
+        }
+
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                handleClick(btn);
+            });
         });
     })();
 

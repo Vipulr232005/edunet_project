@@ -1,0 +1,88 @@
+{% extends 'tracker/base_nav.html' %}
+{% load static %}
+
+{% block title %}Notification settings · PCOD GirlCare{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}">{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 rounded-4 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-2 fw-semibold" style="color:#6b3350;">
+                        <i class="bi bi-bell me-2"></i>Notification settings
+                    </h2>
+                    <p class="text-muted small mb-4">Choose what we can email you about. Playful reminders, tips, and updates — only when you want them 💗</p>
+
+                    <div class="mb-4 p-3 rounded-3" style="background:#ffe4ef;">
+                        <span class="small fw-medium text-muted d-block mb-1">Emails will be sent to</span>
+                        <span class="fw-medium" style="color:#6b3350;">{{ notification_email|default:"(no email set)" }}</span>
+                        {% if not notification_email %}
+                            <p class="small text-muted mt-1 mb-0">Add an email in your account to receive notifications.</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="post" action="{% url 'tracker:notification_settings' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.events_workshops }}
+                                <label class="form-check-label" for="id_events_workshops">Events & Workshops</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">Webinars, live sessions, and fun events we host.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.health_tips }}
+                                <label class="form-check-label" for="id_health_tips">Health Tips</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">Gentle reminders, wellness tips, and a little love in your inbox.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.app_updates }}
+                                <label class="form-check-label" for="id_app_updates">App Updates</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">New features, fixes, and what's cooking behind the scenes.</small>
+                        </div>
+                        <hr class="my-4">
+                        <p class="small fw-medium text-muted mb-3">Daily reminders (emailed at set times)</p>
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.breakfast_reminder }}
+                                <label class="form-check-label" for="id_breakfast_reminder">Breakfast reminder</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">A nudge to fuel up in the morning.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.water_reminder }}
+                                <label class="form-check-label" for="id_water_reminder">Water reminder</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">Stay hydrated — we'll remind you a few times a day.</small>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.stretch_reminder }}
+                                <label class="form-check-label" for="id_stretch_reminder">Stretch reminder</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">Quick stretch break so your body thanks you.</small>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check form-switch mb-2">
+                                {{ form.daily_log_reminder }}
+                                <label class="form-check-label" for="id_daily_log_reminder">Daily log reminder</label>
+                            </div>
+                            <small class="text-muted d-block ms-4">Reminder to log today's mood, steps, and wins.</small>
+                        </div>
+                        <button type="submit" class="btn rounded-pill px-4" style="background:linear-gradient(135deg,#ffc8dd,#ff9ebc);border:none;color:#5b2941;font-weight:600;">
+                            Save preferences
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

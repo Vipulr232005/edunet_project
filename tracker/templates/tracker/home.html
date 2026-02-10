@@ -85,7 +85,10 @@
     <div class="container">
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-1">
-                <div class="home-img-placeholder home-img-philosophy" aria-hidden="true"></div>
+                <div class="home-img-placeholder home-img-philosophy" aria-hidden="true">
+                    {% load static %}
+                    <img src="{% static 'tracker/images/philosophy.png' %}" alt="Gentle self-care and wellness philosophy" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
+                </div>
             </div>
             <div class="col-lg-7 order-lg-2">
                 <h2 class="home-section-title mb-3">🧘‍♀️ Wellness Philosophy</h2>
@@ -108,7 +111,9 @@
     <div class="container">
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-2">
-                <div class="home-img-placeholder home-img-lifestyle" aria-hidden="true"></div>
+                <div class="home-img-placeholder home-img-lifestyle" aria-hidden="true">
+                    <img src="{% static 'tracker/images/lifestyle.png' %}" alt="Lifestyle – mindful movement and calm" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
+                </div>
             </div>
             <div class="col-lg-7 order-lg-1">
                 <h2 class="home-section-title mb-3">🌸 Lifestyle Encouragement</h2>
@@ -157,7 +162,7 @@
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-2">
                 <div class="home-img-placeholder home-img-movement" aria-hidden="true">
-                    <img src="{% static 'tracker/images/moment.png' %}" alt="Movement" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
+                    <img src="{% static 'tracker/images/movement.png' %}" alt="Movement – joyful movement and freedom" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
                 </div>
             </div>
             <div class="col-lg-7 order-lg-1">
@@ -175,7 +180,9 @@
     <div class="container">
         <div class="row g-4 align-items-center">
             <div class="col-lg-5 order-lg-1">
-                <div class="home-img-placeholder home-img-mental" aria-hidden="true"></div>
+                <div class="home-img-placeholder home-img-mental" aria-hidden="true">
+                    <img src="{% static 'tracker/images/mental.png' %}" alt="Mental health and self-compassion – calm coastal journey" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
+                </div>
             </div>
             <div class="col-lg-7 order-lg-2">
                 <h2 class="home-section-title mb-3">🌙 Mental Health & Self-Compassion</h2>
@@ -247,7 +254,7 @@
         <p class="home-section-title mb-3">Track. Learn. Heal. Thrive.</p>
         <div class="d-flex justify-content-center mb-4">
             <div class="home-img-placeholder home-img-cta" aria-hidden="true" style="max-width: 320px; width: 100%; min-height: 160px;">
-                <!-- Add image: <img src="{% static 'tracker/images/your-image.png' %}" alt="" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;"> -->
+                <img src="{% static 'tracker/images/cta.png' %}" alt="Your journey is unique – gentle reminder" class="img-fluid rounded-4 w-100 h-100" style="object-fit: cover;">
             </div>
         </div>
         <p class="mb-4">Welcome to your PCOD wellness space 🌸</p>

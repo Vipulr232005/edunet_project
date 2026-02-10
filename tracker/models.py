@@ -58,3 +58,67 @@ class DietDayLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} diet – {self.date}"
+
+
+class NotificationPreference(models.Model):
+    """Per-user email notification toggles. One row per user."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notification_preference',
+    )
+    events_workshops = models.BooleanField(
+        default=True,
+        help_text='Events & Workshops notifications',
+    )
+    health_tips = models.BooleanField(
+        default=True,
+        help_text='Health Tips notifications',
+    )
+    app_updates = models.BooleanField(
+        default=True,
+        help_text='App Updates notifications',
+    )
+    breakfast_reminder = models.BooleanField(
+        default=True,
+        help_text='Breakfast reminder (scheduled email)',
+    )
+    water_reminder = models.BooleanField(
+        default=True,
+        help_text='Water reminder (scheduled email)',
+    )
+    stretch_reminder = models.BooleanField(
+        default=True,
+        help_text='Stretch reminder (scheduled email)',
+    )
+    daily_log_reminder = models.BooleanField(
+        default=True,
+        help_text='Daily log reminder – remind to enter today\'s log',
+    )
+
+    class Meta:
+        verbose_name = 'Notification preference'
+        verbose_name_plural = 'Notification preferences'
+
+    def __str__(self):
+        return f"Notifications for {self.user.username}"
+
+
+class ReminderLog(models.Model):
+    """Tracks which reminders were already sent today so we don't send twice."""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='reminder_logs',
+    )
+    date = models.DateField(db_index=True)
+    reminder_type = models.CharField(max_length=32, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'date', 'reminder_type'], name='unique_user_date_reminder'),
+        ]
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} – {self.date} – {self.reminder_type}"

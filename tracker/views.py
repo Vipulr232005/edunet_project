@@ -4,8 +4,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
-from .forms import SignUpForm, DailyLogForm
-from .models import DailyLog, DietDayLog
+from django.core.mail import send_mail
+from .forms import SignUpForm, DailyLogForm, NotificationPreferenceForm
+from .models import DailyLog, DietDayLog, NotificationPreference
 
 MOTIVATIONS = [
     "Today, you choose foods that help your hormones feel safe and supported.",
@@ -60,6 +61,104 @@ MOTIVATIONS = [
     "Take care of yourself today—you deserve a healthy, gentle life. 💚",
 ]
 
+# Daily PCOD myth questions – BASIC and HARD
+DAILY_MYTH_QUESTIONS_BASIC = [
+    {
+        "text": "PCOD only affects women who are overweight.",
+        "fact": "False. PCOD can affect women of all body types. Weight can influence symptoms, but it is not the only cause.",
+        "answer": False,
+    },
+    {
+        "text": "Having PCOD means you can never get pregnant.",
+        "fact": "False. Many women with PCOD conceive naturally or with support. PCOD can make things slower, not impossible.",
+        "answer": False,
+    },
+    {
+        "text": "PCOD is the same as PCOS.",
+        "fact": "Not exactly. The terms are often used together, but PCOD usually refers to ovarian changes, while PCOS is a wider metabolic-hormonal picture.",
+        "answer": False,
+    },
+    {
+        "text": "Skipping periods with PCOD is always dangerous.",
+        "fact": "Not always. Irregular cycles are a symptom that needs monitoring, but every skipped period is not an emergency. Regular check‑ins with your doctor help.",
+        "answer": False,
+    },
+    {
+        "text": "Only hormonal tablets can manage PCOD.",
+        "fact": "False. Lifestyle, sleep, stress care, movement and nutrition often play a huge role alongside medicines.",
+        "answer": False,
+    },
+    {
+        "text": "PCOD means you did something wrong to your body.",
+        "fact": "Absolutely not. PCOD is a mix of genetics, hormones, and environment. You deserve kindness, not blame.",
+        "answer": False,
+    },
+]
+
+DAILY_MYTH_QUESTIONS_HARD = [
+    {
+        "text": "If your periods look regular, your PCOD is fully cured.",
+        "fact": "Not always. Regular periods are a good sign, but PCOD is about hormones, insulin, ovaries and metabolism together. Long‑term habits still matter.",
+        "answer": False,
+    },
+    {
+        "text": "PCOD happens only because of a ‘bad’ lifestyle.",
+        "fact": "False. Lifestyle can worsen or ease symptoms, but genetics, hormones and environment are big players too. It is not a punishment.",
+        "answer": False,
+    },
+    {
+        "text": "If ultrasound shows cysts once, you will always have them.",
+        "fact": "No. Ovarian appearance can change over time. Cysts may reduce as hormones, weight, and insulin resistance improve.",
+        "answer": False,
+    },
+    {
+        "text": "Carbs must be completely eliminated if you have PCOD.",
+        "fact": "False. You don’t have to remove carbs, just choose smarter portions and fibre‑rich options. Balance beats extremes.",
+        "answer": False,
+    },
+    {
+        "text": "PCOD automatically goes away after marriage or pregnancy.",
+        "fact": "Myth. Marriage or pregnancy are not treatments. Hormonal patterns can shift, but PCOD still needs gentle, long‑term care.",
+        "answer": False,
+    },
+    {
+        "text": "If you are thin with PCOD, you don’t need to worry.",
+        "fact": "Lean PCOD is real. Even at a lower weight, hormones and insulin may still need support and monitoring.",
+        "answer": False,
+    },
+]
+
+
+def get_daily_myth_questions():
+    """Return today's BASIC and HARD myth questions based purely on the date."""
+    today = timezone.localdate()
+    # Day of year (1–366) – safe for indexing
+    day_of_year = today.timetuple().tm_yday
+    basic_index = day_of_year % len(DAILY_MYTH_QUESTIONS_BASIC)
+    hard_index = day_of_year % len(DAILY_MYTH_QUESTIONS_HARD)
+    return DAILY_MYTH_QUESTIONS_BASIC[basic_index], DAILY_MYTH_QUESTIONS_HARD[hard_index]
+# Playful, Zomato-style email content for notifications (use as samples or override per type)
+SAMPLE_EMAIL_EVENTS_WORKSHOPS = (
+    "Hey you 👀\n\n"
+    "We've got something fun coming up — events & workshops just for you.\n\n"
+    "Your body was thinking about you today… Slow days are still progress 💗\n"
+    "Come say hi, learn something new, and don't forget — you're doing fine 🌸\n\n"
+    "— PCOD GirlCare"
+)
+SAMPLE_EMAIL_HEALTH_TIPS = (
+    "Hey you 👀\n\n"
+    "Your body was thinking about you today…\n\n"
+    "Slow days are still progress 💗 Drink some water, stretch a little, "
+    "and don't forget — you're doing fine 🌸\n\n"
+    "— PCOD GirlCare"
+)
+SAMPLE_EMAIL_APP_UPDATES = (
+    "Hey you 👀\n\n"
+    "We've been cooking something new for you — a little app update to make your journey smoother.\n\n"
+    "Check it out when you can. No rush — we'll be here 💗\n\n"
+    "— PCOD GirlCare"
+)
+
 
 def home(request):
     """Landing / info page – shown to everyone (logged in or not)."""
@@ -84,6 +183,9 @@ def signup(request):
 def dashboard(request):
     user = request.user
     today = timezone.localdate()
+
+    # Daily myth questions (same for everyone on a given day)
+    daily_basic_myth, daily_hard_myth = get_daily_myth_questions()
 
     # Only this user's data – secured
     today_log = DailyLog.objects.filter(user=user, date=today).first()
@@ -130,6 +232,8 @@ def dashboard(request):
             'username': user.username,
             'show_motivation': show_motivation,
             'daily_motivation': random.choice(MOTIVATIONS),
+            'daily_basic_myth': daily_basic_myth,
+            'daily_hard_myth': daily_hard_myth,
             'today_log': today_log,
             'log_form': DailyLogForm(instance=today_log),
             'symptoms_count': symptoms_count,
@@ -154,6 +258,8 @@ def dashboard(request):
             'username': user.username,
             'show_motivation': show_motivation,
             'daily_motivation': random.choice(MOTIVATIONS),
+            'daily_basic_myth': daily_basic_myth,
+            'daily_hard_myth': daily_hard_myth,
             'today_log': None,
             'log_form': DailyLogForm(),
             'symptoms_count': 0,
@@ -451,3 +557,67 @@ def diet_plan(request):
         'chart_energy_json': json.dumps(chart_energy),
     }
     return render(request, 'tracker/diet_plan.html', context)
+
+
+def send_notification_email(user, notification_type, subject, body_plain):
+    """
+    Send an email ONLY to the given user's email (user.email). No hardcoded addresses.
+    Use send_notification_if_enabled() to respect user preferences.
+    """
+    email = getattr(user, 'email', None) or ''
+    if not email or not email.strip():
+        return 0
+    try:
+        return send_mail(
+            subject=subject,
+            message=body_plain,
+            from_email=None,  # uses DEFAULT_FROM_EMAIL
+            recipient_list=[email.strip()],
+            fail_silently=False,
+        )
+    except Exception:
+        return 0
+
+
+def send_notification_if_enabled(user, notification_type, subject, body_plain):
+    """
+    Send email to user only if they have enabled this notification type.
+    notification_type: one of 'events_workshops', 'health_tips', 'app_updates',
+    'breakfast_reminder', 'water_reminder', 'stretch_reminder', 'daily_log_reminder'
+    """
+    prefs = NotificationPreference.objects.filter(user=user).first()
+    if not prefs:
+        return 0
+    if notification_type == 'events_workshops' and not prefs.events_workshops:
+        return 0
+    if notification_type == 'health_tips' and not prefs.health_tips:
+        return 0
+    if notification_type == 'app_updates' and not prefs.app_updates:
+        return 0
+    if notification_type == 'breakfast_reminder' and not prefs.breakfast_reminder:
+        return 0
+    if notification_type == 'water_reminder' and not prefs.water_reminder:
+        return 0
+    if notification_type == 'stretch_reminder' and not prefs.stretch_reminder:
+        return 0
+    if notification_type == 'daily_log_reminder' and not prefs.daily_log_reminder:
+        return 0
+    return send_notification_email(user, notification_type, subject, body_plain)
+
+
+@login_required
+def notification_settings(request):
+    """Settings page: toggle notification types, show email that will receive notifications."""
+    user = request.user
+    prefs, _ = NotificationPreference.objects.get_or_create(user=user, defaults={})
+    if request.method == 'POST':
+        form = NotificationPreferenceForm(request.POST, instance=prefs)
+        if form.is_valid():
+            form.save()
+            return redirect('tracker:notification_settings')
+    else:
+        form = NotificationPreferenceForm(instance=prefs)
+    return render(request, 'tracker/notification_settings.html', {
+        'form': form,
+        'notification_email': getattr(user, 'email', '') or '',
+    })
