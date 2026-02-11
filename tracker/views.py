@@ -1,12 +1,21 @@
 import json
 import random
+import urllib.request
+import urllib.error
+import logging
+from datetime import timedelta
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.http import JsonResponse
+from django.conf import settings
 from django.core.mail import send_mail
 from .forms import SignUpForm, DailyLogForm, NotificationPreferenceForm
 from .models import DailyLog, DietDayLog, NotificationPreference
+
+logger = logging.getLogger(__name__)
 
 MOTIVATIONS = [
     "Today, you choose foods that help your hormones feel safe and supported.",
@@ -354,7 +363,7 @@ def wellness(request):
     wellness_score = today_log.wellness_score if today_log else None
     sleep_quality = today_log.sleep_quality if today_log else None
     mood = today_log.mood if today_log else None
-    # Build simple list for last 7 days wellness
+    mood_label = _mood_label_for_agent(mood)
     wellness_days = [
         {'date': log.date, 'wellness': log.wellness_score, 'mood': log.mood, 'sleep': log.sleep_quality}
         for log in last_7
@@ -364,7 +373,9 @@ def wellness(request):
         'wellness_score': wellness_score,
         'sleep_quality': sleep_quality,
         'mood': mood,
+        'mood_label': mood_label,
         'wellness_days': wellness_days,
+        'gemini_configured': bool(getattr(settings, 'GEMINI_API_KEY', '').strip()),
     }
     return render(request, 'tracker/wellness.html', context)
 
@@ -500,65 +511,6 @@ DIET_PLAN = [
 WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
-@login_required
-def diet_plan(request):
-    """Diet plan page: show today's plan (Day N by weekday), tick slots, graph of protein/carbs/energy."""
-    user = request.user
-    today = timezone.localdate()
-    weekday_index = today.weekday()  # 0=Monday, 6=Sunday
-    day_number = weekday_index + 1  # Day 1 = Monday, ..., Day 7 = Sunday
-    day_plan = DIET_PLAN[weekday_index]
-    day_name = WEEKDAY_NAMES[weekday_index]
-
-    log, _ = DietDayLog.objects.get_or_create(user=user, date=today, defaults={})
-
-    # Add checked flag for each slot for the template
-    for item in day_plan:
-        item['checked'] = getattr(log, item['slot'], False)
-
-    if request.method == 'POST':
-        for slot_key in DIET_SLOT_MACROS.keys():
-            setattr(log, slot_key, slot_key in request.POST)
-        log.save()
-        return redirect('tracker:diet_plan')
-
-    # Last 14 days for chart: protein, carbs, energy from ticked slots
-    last_14_logs = (
-        DietDayLog.objects.filter(user=user, date__lte=today)
-        .order_by('-date')[:14]
-    )
-    last_14_list = list(last_14_logs)
-    last_14_list.reverse()
-    chart_labels = [d.date.strftime('%d %b') for d in last_14_list]
-    chart_protein = []
-    chart_carbs = []
-    chart_energy = []
-    for d in last_14_list:
-        p, c, e = 0, 0, 0
-        for slot_key, (mp, mc, me) in DIET_SLOT_MACROS.items():
-            if getattr(d, slot_key):
-                p += mp
-                c += mc
-                e += me
-        chart_protein.append(p)
-        chart_carbs.append(c)
-        chart_energy.append(e)
-
-    context = {
-        'username': user.username,
-        'day_number': day_number,
-        'day_name': day_name,
-        'day_plan': day_plan,
-        'log': log,
-        'today': today,
-        'chart_labels_json': json.dumps(chart_labels),
-        'chart_protein_json': json.dumps(chart_protein),
-        'chart_carbs_json': json.dumps(chart_carbs),
-        'chart_energy_json': json.dumps(chart_energy),
-    }
-    return render(request, 'tracker/diet_plan.html', context)
-
-
 def send_notification_email(user, notification_type, subject, body_plain):
     """
     Send an email ONLY to the given user's email (user.email). No hardcoded addresses.
@@ -605,19 +557,499 @@ def send_notification_if_enabled(user, notification_type, subject, body_plain):
     return send_notification_email(user, notification_type, subject, body_plain)
 
 
-@login_required
-def notification_settings(request):
-    """Settings page: toggle notification types, show email that will receive notifications."""
-    user = request.user
-    prefs, _ = NotificationPreference.objects.get_or_create(user=user, defaults={})
-    if request.method == 'POST':
-        form = NotificationPreferenceForm(request.POST, instance=prefs)
-        if form.is_valid():
-            form.save()
-            return redirect('tracker:notification_settings')
+# --- AI Diet Agent (Gemini API) ---
+
+# Mode guard at top of each prompt to avoid cross-mode behavior.
+SYSTEM_SUPPORT_PROMPT_BASE = (
+    "You are in PCOD Support Chat mode. Do NOT generate meal plans, calorie counts, or structured JSON.\n"
+    "You are a gentle, empathetic support companion for someone managing PCOD (PCOS).\n\n"
+    "PRIMARY GOAL:\n"
+    "- Help the user feel heard, validated, and gently supported.\n"
+    "- Prioritize emotional acknowledgment BEFORE explanations.\n\n"
+    "STYLE & TONE RULES:\n"
+    "- Never assume the user feels good just because wellness scores are high.\n"
+    "- Reflect the user's concern in the first 1–2 sentences (e.g., discomfort, confusion, worry).\n"
+    "- Use warm, human language — not dashboard summaries or motivational slogans.\n"
+    "- Avoid cheerleading, toxic positivity, or dismissive reassurance.\n\n"
+    "CONTENT RULES:\n"
+    "- Do NOT diagnose or give medical treatment.\n"
+    "- Normalize PCOD-related experiences without minimizing discomfort.\n"
+    "- When relevant, gently connect symptoms to cycle day, hormones, digestion, stress, or hydration.\n"
+    "- Offer 2–4 simple, optional self-care ideas (hydration, movement, food awareness, rest).\n"
+    "- Use bullets for clarity when listing causes or tips.\n\n"
+    "SAFETY:\n"
+    "- Do not cause alarm.\n"
+    "- Suggest seeing a doctor ONLY if symptoms are severe, persistent, or worsening.\n\n"
+    "WELLNESS CONTEXT:\n"
+    "- Use wellness context only as background. Do NOT praise or judge the user based on it.\n\n"
+    "OUTPUT FORMAT:\n"
+    "- Short paragraphs.\n"
+    "- Bullets for causes or tips.\n"
+    "- No emojis.\n"
+    "- No diet plans, calorie counts, or structured data.\n"
+)
+
+SYSTEM_DIET_PROMPT_BASE = (
+    "You are in AI Diet Planner mode. Only answer with diet guidance or structured diet JSON when requested. Do NOT provide emotional counseling. "
+    "You are a supportive, friendly diet and nutrition assistant for someone managing PCOD (PCOS). "
+    "Do not give medical advice or diagnose. Suggest general wellness and diet ideas only. "
+    "Keep replies concise and warm. "
+    "Target intake: under 1800 kcal, 80-100 g protein when suggesting full day ideas. "
+    "When the user clearly asks for a full-day diet plan (e.g. breakfast, lunch, snack, dinner with timings), ALWAYS, at the end of your reply, "
+    "include a machine-readable JSON block between the markers ---DIET_PLAN_JSON_START--- and ---DIET_PLAN_JSON_END---. "
+    "The JSON MUST have this exact shape: "
+    "{"
+    "\"day\": \"Monday\", "
+    "\"slots\": ["
+    "{"
+    "\"time\": \"07:00\", "
+    "\"label\": \"07:00 AM – Early Morning\", "
+    "\"slot_key\": \"early_morning\", "
+    "\"title\": \"Detox drink, Almonds, Walnuts\", "
+    "\"description\": \"Detox drink, Almonds (6–8), Walnuts (3–4)\", "
+    "\"protein_g\": 6, "
+    "\"carbs_g\": 10, "
+    "\"calories_kcal\": 120"
+    "}"
+    "]"
+    "}. "
+    "Use as many slots as needed for the day (e.g. early_morning, breakfast, mid_morning, lunch, evening_snack, dinner, bedtime). "
+    "Return ONLY valid JSON matching this schema. Do not include explanations, markdown, or extra text inside the JSON block. "
+    "You may still write a friendly explanation before the JSON, but the JSON part must be clean so it can be parsed by code."
+)
+
+
+def _build_wellness_ctx(user, for_support=False):
+    """Build a bullet-format wellness context string from today's or latest DailyLog.
+    When for_support=True, use a header that tells the model not to over-prioritize wellness data."""
+    today = timezone.localdate()
+    log = DailyLog.objects.filter(user=user, date=today).first()
+    if not log:
+        log = DailyLog.objects.filter(user=user).order_by("-date").first()
+    bullets = []
+    if log:
+        mood_label = _mood_label_for_agent(log.mood)
+        bullets.append("Mood: " + mood_label)
+        if log.wellness_score is not None:
+            bullets.append("Wellness score: " + str(log.wellness_score) + "%")
+        if log.sleep_quality is not None:
+            bullets.append("Sleep: " + str(log.sleep_quality) + "/10")
+        if getattr(log, "steps", None) is not None:
+            bullets.append("Steps: " + str(log.steps))
+        if getattr(log, "water_glasses", None) is not None:
+            bullets.append("Water: " + str(log.water_glasses) + " glasses")
+        if getattr(log, "cycle_day", None) is not None:
+            bullets.append("Cycle day: " + str(log.cycle_day))
     else:
-        form = NotificationPreferenceForm(instance=prefs)
-    return render(request, 'tracker/notification_settings.html', {
-        'form': form,
-        'notification_email': getattr(user, 'email', '') or '',
+        bullets.append("Mood: not logged today")
+    header = (
+        "User wellness context (use gently, do not over-prioritize):"
+        if for_support
+        else "User wellness context:"
+    )
+    return header + "\n- " + "\n- ".join(bullets)
+
+
+def _mood_label_for_agent(mood_value):
+    """Map mood 1–10 to a short label for the AI context."""
+    if mood_value is None:
+        return "not logged today"
+    if mood_value <= 3:
+        return "low / tired"
+    if mood_value <= 5:
+        return "stressed / okay"
+    if mood_value >= 8:
+        return "energetic / great"
+    return "calm / moderate"
+
+
+def _call_gemini(user_message, system_instruction, api_key, history=None):
+    """Call Gemini generateContent API. Returns (reply_text, error_message)."""
+    if not api_key or not api_key.strip():
+        logger.error("Gemini API key is missing or empty. Check GEMINI_API_KEY in environment/.env.")
+        return None, "AI is not configured. Add GEMINI_API_KEY to your .env file."
+    key = api_key.strip()
+    # Use single-turn format: one user message with system context in the prompt (most reliable)
+    prompt_parts = []
+    if system_instruction:
+        prompt_parts.append(system_instruction)
+    if history:
+        prompt_parts.append("\n\nRecent conversation:")
+        for h in history[-6:]:
+            who = "User" if h.get("role") == "user" else "Assistant"
+            text = (h.get("content") or "").strip()
+            if text:
+                prompt_parts.append(f"\n{who}: {text}")
+    prompt_parts.append("\n\nUser: " + user_message)
+    prompt_parts.append("\n\nAssistant:")
+    full_prompt = "".join(prompt_parts)
+    payload = {
+        "contents": [{"parts": [{"text": full_prompt}]}],
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024},
+    }
+    body = json.dumps(payload).encode("utf-8")
+    # Prefer Gemma 3 12B; fallback to Gemini Flash models (all v1beta)
+    for model in ("gemma-3-12b-it", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        req = urllib.request.Request(url, data=body, method="POST")
+        req.add_header("Content-Type", "application/json")
+        try:
+            logger.debug("Calling Gemini model %s", model)
+            with urllib.request.urlopen(req, timeout=90) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            logger.debug("Gemini model %s responded successfully", model)
+            for c in data.get("candidates", []):
+                for p in c.get("content", {}).get("parts", []):
+                    if "text" in p:
+                        return p["text"].strip(), None
+            logger.error("Gemini model %s returned no text candidates.", model)
+            return None, "No reply from the model."
+        except urllib.error.HTTPError as e:
+            err_body = ""
+            try:
+                if e.fp:
+                    err_body = e.read().decode("utf-8", errors="replace")
+            except Exception:
+                pass
+            err_snippet = (err_body[:400] if err_body else str(e))
+            logger.error(
+                "Gemini HTTPError for model %s (status %s): %s",
+                model,
+                e.code,
+                err_snippet,
+            )
+            if e.code == 404:
+                continue
+            return None, f"API error ({e.code}): {err_snippet}"
+        except Exception as e:
+            logger.exception("Error calling Gemini model %s: %s", model, e)
+            return None, str(e)
+    logger.error(
+        "API error: no supported Gemini model responded successfully. "
+        "Tried models: gemma-3-12b-it, gemini-3-flash-preview, gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash."
+    )
+    return None, "API error: no supported model found. Try gemini-2.0-flash or gemini-1.5-flash in Google AI Studio."
+
+
+@login_required
+@ensure_csrf_cookie
+def ai_diet_agent(request):
+    """AI Diet Agent page: chat UI; mood from today's or latest log."""
+    user = request.user
+    today = timezone.localdate()
+    today_log = DailyLog.objects.filter(user=user, date=today).first()
+    if today_log:
+        mood_val = today_log.mood
+        mood_label = _mood_label_for_agent(mood_val)
+        has_log_today = True
+    else:
+        latest = DailyLog.objects.filter(user=user).order_by("-date").first()
+        mood_val = latest.mood if latest else None
+        mood_label = _mood_label_for_agent(mood_val)
+        has_log_today = False
+    return render(request, "tracker/ai_diet_agent.html", {
+        "username": user.username,
+        "mood": mood_val,
+        "mood_label": mood_label,
+        "has_log_today": has_log_today,
+        "gemini_configured": bool(getattr(settings, "GEMINI_API_KEY", "").strip()),
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def pcod_support_chat(request):
+    """POST: JSON { message: string, history?: [{role, content}] }. Returns { reply: string } or { error: string }."""
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    message = (body.get("message") or "").strip()
+    if len(message) > 2000:
+        return JsonResponse({"error": "Message too long."}, status=400)
+    if not message:
+        return JsonResponse({"error": "Empty message."}, status=400)
+    history = body.get("history")
+    if history is not None and not isinstance(history, list):
+        history = None
+    user = request.user
+    wellness_ctx = _build_wellness_ctx(user, for_support=True)
+    system_instruction = SYSTEM_SUPPORT_PROMPT_BASE + "\n\n" + wellness_ctx
+    api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
+    reply_text, err = _call_gemini(message, system_instruction, api_key, history)
+    if err:
+        return JsonResponse({"error": err}, status=503)
+    return JsonResponse({"reply": reply_text})
+
+
+@login_required
+@require_http_methods(["POST"])
+def diet_planner_chat(request):
+    """POST: JSON { message: string, history?: [{role, content}] }. Returns { reply: string } or { error: string }."""
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    message = (body.get("message") or "").strip()
+    if len(message) > 2000:
+        return JsonResponse({"error": "Message too long."}, status=400)
+    if not message:
+        return JsonResponse({"error": "Empty message."}, status=400)
+    history = body.get("history")
+    if history is not None and not isinstance(history, list):
+        history = None
+    user = request.user
+    wellness_ctx = _build_wellness_ctx(user)
+    preference_parts = []
+    last_user_text = (body.get("last_user_text") or "").strip()
+    last_assistant_text = (body.get("last_assistant_text") or "").strip()
+    if last_user_text:
+        preference_parts.append("User's latest request/preference: " + last_user_text)
+    if last_assistant_text:
+        preference_parts.append("Assistant's last reply: " + last_assistant_text)
+    preference_ctx = " ".join(preference_parts) if preference_parts else ""
+    system_instruction = (
+        SYSTEM_DIET_PROMPT_BASE + "\n\n" + wellness_ctx +
+        " Consider mood, sleep and wellness when suggesting foods or habits. "
+    )
+    if preference_ctx:
+        system_instruction += "\n\nStrictly respect when shaping the plan: " + preference_ctx
+    api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
+    reply_text, err = _call_gemini(message, system_instruction, api_key, history)
+    if err:
+        return JsonResponse({"error": err}, status=503)
+    # If reply contains a diet plan JSON block, extract it and return for "Insert to my plan"
+    reply_display = reply_text
+    plan = None
+    start_marker = "---DIET_PLAN_JSON_START---"
+    end_marker = "---DIET_PLAN_JSON_END---"
+    if start_marker in reply_text and end_marker in reply_text:
+        try:
+            start_idx = reply_text.index(start_marker) + len(start_marker)
+            end_idx = reply_text.index(end_marker)
+            json_str = reply_text[start_idx:end_idx].strip()
+            plan = json.loads(json_str)
+            if isinstance(plan, dict) and isinstance(plan.get("slots"), list) and plan["slots"]:
+                for slot in plan["slots"]:
+                    if isinstance(slot, dict):
+                        slot.setdefault("protein_g", 0)
+                        slot.setdefault("carbs_g", 0)
+                        slot.setdefault("calories_kcal", 0)
+                # Strip the JSON block from display
+                reply_display = (
+                    reply_text[: reply_text.index(start_marker)].strip() +
+                    reply_text[reply_text.index(end_marker) + len(end_marker) :].strip()
+                )
+                reply_display = reply_display.strip()
+            else:
+                plan = None
+        except (json.JSONDecodeError, ValueError):
+            plan = None
+    payload = {"reply": reply_display}
+    if plan is not None:
+        payload["plan"] = plan
+    return JsonResponse(payload)
+
+
+@login_required
+@require_http_methods(["POST"])
+def diet_plan_import(request):
+    """
+    Save an AI-generated diet plan to the database (called when user clicks "Insert this to my plan").
+    Expects JSON: { "plan": { "day": str, "slots": [ {...}, ... ] }, optional "note": str }.
+    """
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    plan = body.get("plan")
+    if not isinstance(plan, dict):
+        return JsonResponse({"error": "Missing or invalid 'plan' object."}, status=400)
+    slots = plan.get("slots")
+    if not isinstance(slots, list) or not slots:
+        return JsonResponse({"error": "Plan must contain a non-empty 'slots' list."}, status=400)
+    # Minimal per-slot validation
+    for idx, slot in enumerate(slots):
+        if not isinstance(slot, dict):
+            return JsonResponse({"error": f"Slot {idx} is not an object."}, status=400)
+        if "time" not in slot or "label" not in slot or "description" not in slot:
+            return JsonResponse({"error": f"Slot {idx} is missing required fields."}, status=400)
+        slot.setdefault("protein_g", 0)
+        slot.setdefault("carbs_g", 0)
+        slot.setdefault("calories_kcal", 0)
+    note = (body.get("note") or "").strip() if isinstance(body.get("note"), str) else ""
+    today = timezone.localdate()
+    checked = [False] * len(slots)
+    DietDayLog.objects.update_or_create(
+        user=request.user,
+        date=today,
+        defaults={"plan": plan, "note": note, "checked": checked},
+    )
+    return JsonResponse({"ok": True})
+
+
+@login_required
+@require_http_methods(["POST"])
+def diet_plan_generate(request):
+    """
+    Generate a fresh AI diet plan (JSON only) and return it. Does not store in session;
+    user must click "Insert this to my plan" in the chat to save. Returns { "ok": True, "plan": plan }.
+    """
+    user = request.user
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        body = {}
+    last_user_text = (body.get("last_user_text") or "").strip()
+    last_assistant_text = (body.get("last_assistant_text") or "").strip()
+    wellness_ctx = _build_wellness_ctx(user)
+    preference_parts = []
+    if last_user_text:
+        preference_parts.append("User's latest request/preference: " + last_user_text)
+    if last_assistant_text:
+        preference_parts.append("Assistant's last reply: " + last_assistant_text)
+    preference_ctx = " ".join(preference_parts) if preference_parts else ""
+
+    api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
+    system_instruction = (
+        SYSTEM_DIET_PROMPT_BASE + "\n\n" + wellness_ctx + " "
+        "For this specific request, you MUST respond with ONLY a single JSON object, "
+        "no explanation, no extra text. Use multiple slots for the full day. "
+        "Adjust foods and macros for PCOD-friendly, balanced meals. "
+    )
+    if preference_ctx:
+        system_instruction += "Strictly respect when shaping the plan: " + preference_ctx + " "
+    system_instruction += "Remember: return ONLY valid JSON, nothing else."
+    # Simple message; full prompt is built inside _call_gemini
+    message = "Generate today's full-day diet plan as JSON."
+    reply_text, err = _call_gemini(message, system_instruction, api_key, history=None)
+    if err:
+        return JsonResponse({"error": err}, status=503)
+    # Try to extract the JSON object from the reply (model may add extra text)
+    try:
+        json_start = reply_text.index("{")
+        json_end = reply_text.rindex("}") + 1
+        json_str = reply_text[json_start:json_end]
+        plan = json.loads(json_str)
+    except Exception as e:
+        return JsonResponse({"error": "Model did not return valid JSON: " + str(e)}, status=502)
+    # Reuse the same validation/storage logic as import
+    if not isinstance(plan, dict):
+        return JsonResponse({"error": "Returned plan is not a JSON object."}, status=502)
+    slots = plan.get("slots")
+    if not isinstance(slots, list) or not slots:
+        return JsonResponse({"error": "Returned plan must contain a non-empty 'slots' list."}, status=502)
+    for idx, slot in enumerate(slots):
+        if not isinstance(slot, dict):
+            return JsonResponse({"error": f"Slot {idx} is not an object."}, status=502)
+        if "time" not in slot or "label" not in slot or "description" not in slot:
+            return JsonResponse({"error": f"Slot {idx} is missing required fields."}, status=502)
+        slot.setdefault("protein_g", 0)
+        slot.setdefault("carbs_g", 0)
+        slot.setdefault("calories_kcal", 0)
+    # Return plan to frontend; do not store until user clicks "Insert this to my plan"
+    return JsonResponse({"ok": True, "plan": plan})
+
+
+def _totals_from_plan_slots(slots, checked):
+    """Compute protein, carbs, energy totals from plan slots using checked list."""
+    total_protein = total_carbs = total_energy = 0
+    if not slots or not isinstance(checked, list):
+        return 0, 0, 0
+    for idx, slot in enumerate(slots):
+        if idx < len(checked) and checked[idx] and isinstance(slot, dict):
+            total_protein += float(slot.get("protein_g", 0) or 0)
+            total_carbs += float(slot.get("carbs_g", 0) or 0)
+            total_energy += float(slot.get("calories_kcal", 0) or 0)
+    return total_protein, total_carbs, total_energy
+
+
+@login_required
+def diet_plan(request):
+    """
+    Diet plan page: shows the AI-generated plan from the database,
+    with tickable slots and Protein/Carbs/Energy charts. Data is loaded from DietDayLog (plan/note/checked).
+    """
+    user = request.user
+    today = timezone.localdate()
+    # Prefer today's log with a plan, else most recent log that has a plan
+    obj = DietDayLog.objects.filter(user=user, date=today).exclude(plan__isnull=True).first()
+    if obj is None:
+        obj = DietDayLog.objects.filter(user=user).exclude(plan__isnull=True).order_by("-date").first()
+    if obj is None:
+        context = {
+            "username": user.username,
+            "has_plan": False,
+            "today": today,
+        }
+        return render(request, "tracker/diet_plan.html", context)
+
+    plan = obj.plan
+    plan_note = obj.note or ""
+    slots = plan.get("slots", []) if isinstance(plan, dict) else []
+    if not slots:
+        context = {
+            "username": user.username,
+            "has_plan": False,
+            "today": today,
+        }
+        return render(request, "tracker/diet_plan.html", context)
+
+    checked = obj.checked if isinstance(obj.checked, list) else []
+    if len(checked) != len(slots):
+        checked = [False] * len(slots)
+
+    if request.method == "POST":
+        new_checked = []
+        for idx in range(len(slots)):
+            key = f"slot_{idx}"
+            new_checked.append(bool(request.POST.get(key)))
+        obj.checked = new_checked
+        obj.save(update_fields=["checked"])
+        return redirect("tracker:diet_plan")
+
+    # Totals for the displayed plan (for pie chart / today bar)
+    total_protein, total_carbs, total_energy = _totals_from_plan_slots(slots, checked)
+
+    # 7-day bar chart from database: for each of last 7 days, get DietDayLog with plan and compute totals
+    labels = []
+    protein_series = []
+    carbs_series = []
+    energy_series = []
+    plan_by_date = {}
+    for p in DietDayLog.objects.filter(user=user, date__gte=today - timedelta(days=6), date__lte=today).exclude(plan__isnull=True):
+        slots_p = p.plan.get("slots", []) if isinstance(p.plan, dict) else []
+        checked_p = p.checked if isinstance(p.checked, list) else []
+        plan_by_date[p.date] = _totals_from_plan_slots(slots_p, checked_p)
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        labels.append(day.strftime("%d %b"))
+        totals = plan_by_date.get(day, (0, 0, 0))
+        protein_series.append(totals[0])
+        carbs_series.append(totals[1])
+        energy_series.append(totals[2])
+    # Ensure today's bar uses current page totals (in case we just loaded and haven't re-queried)
+    if obj.date == today:
+        protein_series[6] = total_protein
+        carbs_series[6] = total_carbs
+        energy_series[6] = total_energy
+
+    chart_labels_json = json.dumps(labels)
+    chart_protein_json = json.dumps(protein_series)
+    chart_carbs_json = json.dumps(carbs_series)
+    chart_energy_json = json.dumps(energy_series)
+
+    slots_with_state = list(zip(slots, checked))
+    context = {
+        "username": user.username,
+        "has_plan": True,
+        "today": today,
+        "plan": plan,
+        "plan_note": plan_note,
+        "slots_with_state": slots_with_state,
+        "chart_labels_json": chart_labels_json,
+        "chart_protein_json": chart_protein_json,
+        "chart_carbs_json": chart_carbs_json,
+        "chart_energy_json": chart_energy_json,
+    }
+    return render(request, "tracker/diet_plan.html", context)

@@ -108,3 +108,6 @@ if RESEND_API_KEY:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'PCOD GirlCare <onboarding@resend.dev>'
+
+# Gemini API for AI Diet Agent (key in .env as GEMINI_API_KEY)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')

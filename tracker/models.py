@@ -35,20 +35,18 @@ class DailyLog(models.Model):
 
 
 class DietDayLog(models.Model):
-    """Tracks which diet plan slots the user completed each day (one row per user per date)."""
+    """
+    One row per user per date. Stores only the AI-generated diet plan: plan JSON, note, and checked slots.
+    """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='diet_day_logs',
     )
     date = models.DateField(db_index=True)
-    early_morning = models.BooleanField(default=False)
-    breakfast = models.BooleanField(default=False)
-    mid_morning = models.BooleanField(default=False)
-    lunch = models.BooleanField(default=False)
-    evening_snack = models.BooleanField(default=False)
-    dinner = models.BooleanField(default=False)
-    bedtime = models.BooleanField(default=False)
+    plan = models.JSONField(null=True, blank=True, help_text='AI plan: { "day": str, "slots": [...] }')
+    note = models.TextField(blank=True)
+    checked = models.JSONField(default=list, help_text='List of bools, one per slot')
 
     class Meta:
         constraints = [

@@ -56,8 +56,8 @@
                 <a href="{% url 'tracker:diet_plan' %}" class="drawer-link {% if request.resolver_match.url_name == 'diet_plan' %}active{% endif %}">
                     <i class="bi bi-journal-richtext me-2"></i>Diet Plan
                 </a>
-                <a href="{% url 'tracker:notification_settings' %}" class="drawer-link {% if request.resolver_match.url_name == 'notification_settings' %}active{% endif %}">
-                    <i class="bi bi-bell me-2"></i>Notification settings
+                <a href="{% url 'tracker:ai_diet_agent' %}" class="drawer-link {% if request.resolver_match.url_name == 'ai_diet_agent' %}active{% endif %}">
+                    <i class="bi bi-robot me-2"></i>AI Diet Agent
                 </a>
                 <form method="post" action="{% url 'tracker:logout' %}" id="logoutForm" class="drawer-logout">
                     {% csrf_token %}

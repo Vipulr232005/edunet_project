@@ -1,0 +1,343 @@
+{% extends 'tracker/base_nav.html' %}
+{% load static %}
+
+{% block title %}AI Center · PCOD GirlCare{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'tracker/css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'tracker/css/app-pages.css' %}">
+<style>
+.ai-agent-chat { min-height: 360px; max-height: 50vh; overflow-y: auto; background: linear-gradient(135deg, #fff9fc 0%, #fff0f6 100%); border-radius: 16px; padding: 1rem; }
+.ai-agent-msg { max-width: 85%; margin-bottom: 0.75rem; padding: 0.6rem 1rem; border-radius: 16px; font-size: 0.95rem; }
+.ai-agent-msg.user { margin-left: auto; background: linear-gradient(135deg, #ffc8dd, #ffafcc); color: #5b2941; }
+.ai-agent-msg.assistant { background: #fff; border: 1px solid rgba(255, 158, 188, 0.3); color: #333; }
+.ai-agent-msg .small { font-size: 0.8rem; color: #888; margin-bottom: 0.2rem; }
+.ai-agent-msg .ai-reply-body p { margin-bottom: 0.75rem; }
+.ai-agent-msg .ai-reply-body p:last-child { margin-bottom: 0; }
+.ai-agent-msg .ai-reply-list { margin: 0.5rem 0 0.75rem 1rem; padding-left: 1.25rem; }
+.ai-agent-msg .ai-reply-list li { margin-bottom: 0.35rem; }
+.ai-plan-card { margin-top: 0.75rem; padding: 0.75rem 1rem; background: rgba(255, 158, 188, 0.12); border: 1px solid rgba(255, 158, 188, 0.35); border-radius: 12px; }
+.ai-plan-card .ai-plan-day { font-weight: 600; color: #5b2941; margin-bottom: 0.5rem; }
+.ai-plan-card ul { list-style: none; padding: 0; margin: 0 0 0.75rem 0; font-size: 0.9rem; }
+.ai-plan-card ul li { padding: 0.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.ai-plan-card ul li:last-child { border-bottom: none; }
+.ai-plan-card .btn-insert-plan { margin-top: 0.25rem; font-size: 0.9rem; }
+.ai-tab-pane { display: none; }
+.ai-tab-pane.active { display: block; }
+.nav-tabs .nav-link { color: #5b2941; border: none; border-bottom: 2px solid transparent; }
+.nav-tabs .nav-link.active { font-weight: 600; border-bottom-color: #ff9ebc; background: transparent; }
+button[type="submit"]:disabled { opacity: 0.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 app-page">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center gap-3">
+                <div class="page-icon-wrap"><i class="bi bi-robot"></i></div>
+                <div>
+                    <h2 class="page-title">AI Center</h2>
+                    <p class="page-subtitle mb-0">Ask PCOD questions or get a personalized diet plan.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not gemini_configured %}
+    <div class="alert alert-warning">AI is not configured. Add <code>GEMINI_API_KEY</code> to your <code>.env</code> file.</div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <ul class="nav nav-tabs border-0" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="tab-support-btn" data-bs-toggle="tab" data-bs-target="#tab-support" type="button" role="tab">Ask PCOD Questions</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="tab-diet-btn" data-bs-toggle="tab" data-bs-target="#tab-diet" type="button" role="tab">Get Diet Plan</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body tab-content">
+                    <!-- Support tab (default) -->
+                    <div class="ai-tab-pane active tab-pane" id="tab-support" role="tabpanel">
+                        <h5 class="fw-semibold mb-2"><i class="bi bi-chat-heart me-2"></i>PCOD support chat</h5>
+                        {% if has_log_today %}
+                        <p class="small text-muted mb-2">Using today's mood: <span class="badge rounded-pill bg-light text-dark border">{{ mood_label }}</span> ({{ mood }}/10)</p>
+                        {% else %}
+                        <p class="small text-muted mb-2">No check-in today — <a href="{% url 'tracker:dashboard' %}">log your mood</a> to personalize support.</p>
+                        {% endif %}
+                        <div class="ai-agent-chat mb-3" id="supportChat" role="log" aria-live="polite">
+                            <div class="ai-agent-msg assistant">
+                                <span class="small">Support</span><br>
+                                Hi {{ username }}! I'm here for general PCOD questions, reassurance, and wellness support. I won't give medical advice—just a calm ear and helpful info. What would you like to talk about?
+                            </div>
+                        </div>
+                        <form id="supportForm" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+                            <textarea class="form-control" id="supportInput" rows="2" placeholder="Ask a PCOD question…" maxlength="2000" required></textarea>
+                            <button type="submit" class="btn rounded-pill px-4 align-self-end" style="background:#ff9ebc;border:none;color:#5b2941;font-weight:600;">Send</button>
+                        </form>
+                    </div>
+                    <!-- Diet tab -->
+                    <div class="ai-tab-pane tab-pane" id="tab-diet" role="tabpanel">
+                        <h5 class="fw-semibold mb-2"><i class="bi bi-chat-dots me-2"></i>Diet planner</h5>
+                        {% if has_log_today %}
+                        <p class="small text-muted mb-2">Using today's mood: <span class="badge rounded-pill bg-light text-dark border">{{ mood_label }}</span> ({{ mood }}/10)</p>
+                        {% else %}
+                        <p class="small text-muted mb-2">No check-in today — <a href="{% url 'tracker:dashboard' %}">log your mood</a> so the planner can personalize your plan.</p>
+                        {% endif %}
+                        <div class="ai-agent-chat mb-3" id="dietChat" role="log" aria-live="polite">
+                            <div class="ai-agent-msg assistant">
+                                <span class="small">Diet planner</span><br>
+                                Hi {{ username }}! I'm here to help with diet and nutrition ideas that suit your day. Ask for meal ideas, snacks when you're stressed or tired, or how to hit your protein goal. When you're ready, use "Generate my diet plan" to get a full-day plan.
+                            </div>
+                        </div>
+                        <form id="dietForm" class="d-flex gap-2 mb-2">
+                            {% csrf_token %}
+                            <textarea class="form-control" id="dietInput" rows="2" placeholder="Ask something…" maxlength="2000" required></textarea>
+                            <button type="submit" class="btn rounded-pill px-4 align-self-end" id="dietSendBtn" style="background:#ff9ebc;border:none;color:#5b2941;font-weight:600;">Send</button>
+                        </form>
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="generatePlanBtn">Generate my diet plan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var csrfToken = document.getElementById('csrfToken') && document.getElementById('csrfToken').value;
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * Format assistant reply: paragraphs, **bold**, and * / - bullets as HTML.
+     * Safe: escapes HTML first, then applies only bold and list formatting.
+     */
+    function formatReplyToHtml(content) {
+        if (!content || typeof content !== 'string') return '';
+        var escaped = escapeHtml(content);
+        // **bold** -> <strong>bold</strong> (non-greedy, no newlines inside)
+        escaped = escaped.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        var lines = escaped.split('\n');
+        var out = [];
+        var inList = false;
+        var i, line, trimmed, bulletText;
+        for (i = 0; i < lines.length; i++) {
+            line = lines[i];
+            trimmed = line.trim();
+            if (/^[\*\-]\s+/.test(trimmed)) {
+                if (!inList) { out.push('<ul class="ai-reply-list">'); inList = true; }
+                bulletText = trimmed.replace(/^[\*\-]\s+/, '');
+                out.push('<li>' + bulletText + '</li>');
+            } else {
+                if (inList) { out.push('</ul>'); inList = false; }
+                if (trimmed.length > 0) {
+                    out.push('<p class="mb-2">' + trimmed + '</p>');
+                }
+            }
+        }
+        if (inList) out.push('</ul>');
+        return '<div class="ai-reply-body">' + out.join('') + '</div>';
+    }
+
+    function buildPlanCardHtml(plan) {
+        if (!plan || !plan.slots || !plan.slots.length) return '';
+        var day = escapeHtml(plan.day || 'Today');
+        var list = plan.slots.map(function(s) {
+            var t = escapeHtml((s.time || '') + ' – ' + (s.title || s.description || ''));
+            return '<li>' + t + '</li>';
+        }).join('');
+        return (
+            '<div class="ai-plan-card">' +
+            '<div class="ai-plan-day">' + day + '</div>' +
+            '<ul>' + list + '</ul>' +
+            '<button type="button" class="btn btn-sm btn-success rounded-pill btn-insert-plan">Insert this to my plan</button>' +
+            '</div>'
+        );
+    }
+
+    function addMessage(chatEl, role, content, history, lastUser, lastAssistant, plan, note) {
+        var wrap = document.createElement('div');
+        wrap.className = 'ai-agent-msg ' + role;
+        var label = role === 'user' ? 'You' : (chatEl.id === 'supportChat' ? 'Support' : 'Diet planner');
+        var bodyHtml = role === 'assistant'
+            ? formatReplyToHtml(content)
+            : escapeHtml(content).replace(/\n/g, '<br>');
+        wrap.innerHTML = '<span class="small">' + label + '</span><br>' + bodyHtml;
+        if (plan && role === 'assistant' && chatEl.id === 'dietChat') {
+            wrap.innerHTML += buildPlanCardHtml(plan);
+            wrap.dataset.plan = JSON.stringify(plan);
+            wrap.dataset.note = typeof note === 'string' ? note : '';
+        }
+        chatEl.appendChild(wrap);
+        chatEl.scrollTop = chatEl.scrollHeight;
+        if (history) {
+            history.push({ role: role, content: content });
+        }
+        if (role === 'user' && lastUser) lastUser.value = content;
+        if (role === 'assistant' && lastAssistant) lastAssistant.value = content;
+    }
+
+    // --- Support tab ---
+    var supportChat = document.getElementById('supportChat');
+    var supportForm = document.getElementById('supportForm');
+    var supportInput = document.getElementById('supportInput');
+    var supportHistory = [];
+
+    supportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var text = (supportInput.value || '').trim();
+        if (!text || !csrfToken) return;
+        addMessage(supportChat, 'user', text, supportHistory, null, null);
+        supportInput.value = '';
+        var btn = supportForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        fetch('{% url "tracker:pcod_support_chat" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ message: text, history: supportHistory })
+        })
+        .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+        .then(function(o) {
+            if (o.ok && o.data.reply) {
+                addMessage(supportChat, 'assistant', o.data.reply, supportHistory, null, null);
+            } else {
+                var err = (o.data && o.data.error) ? o.data.error : 'Unknown error';
+                addMessage(supportChat, 'assistant', 'Sorry, something went wrong: ' + err, supportHistory, null, null);
+            }
+        })
+        .catch(function() {
+            addMessage(supportChat, 'assistant', 'Network error. Please try again.', supportHistory, null, null);
+        })
+        .finally(function() { btn.disabled = false; });
+    });
+
+    // --- Diet tab ---
+    var dietChat = document.getElementById('dietChat');
+    var dietForm = document.getElementById('dietForm');
+    var dietInput = document.getElementById('dietInput');
+    var dietSendBtn = document.getElementById('dietSendBtn');
+    var generatePlanBtn = document.getElementById('generatePlanBtn');
+    var dietHistory = [];
+    var lastUserText = '';
+    var lastAssistantText = '';
+
+    dietForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var text = (dietInput.value || '').trim();
+        if (!text || !csrfToken) return;
+        addMessage(dietChat, 'user', text, dietHistory, null, null);
+        lastUserText = text;
+        dietInput.value = '';
+        dietSendBtn.disabled = true;
+        var payload = { message: text, history: dietHistory, last_user_text: lastUserText, last_assistant_text: lastAssistantText };
+        fetch('{% url "tracker:diet_planner_chat" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+        .then(function(o) {
+            if (o.ok && o.data.reply) {
+                lastAssistantText = o.data.reply;
+                addMessage(dietChat, 'assistant', o.data.reply, dietHistory, null, null, o.data.plan || null, o.data.reply);
+            } else {
+                var err = (o.data && o.data.error) ? o.data.error : 'Unknown error';
+                addMessage(dietChat, 'assistant', 'Sorry, something went wrong: ' + err, dietHistory, null, null);
+            }
+        })
+        .catch(function() {
+            addMessage(dietChat, 'assistant', 'Network error. Please try again.', dietHistory, null, null);
+        })
+        .finally(function() { dietSendBtn.disabled = false; });
+    });
+
+    // Insert plan button: save to session and go to diet plan page
+    dietChat.addEventListener('click', function(e) {
+        if (!e.target || !e.target.classList.contains('btn-insert-plan')) return;
+        var wrap = e.target.closest('.ai-agent-msg');
+        if (!wrap || !wrap.dataset.plan) return;
+        var plan = JSON.parse(wrap.dataset.plan);
+        var note = wrap.dataset.note || '';
+        e.target.disabled = true;
+        e.target.textContent = 'Inserting…';
+        fetch('{% url "tracker:diet_plan_import" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ plan: plan, note: note })
+        })
+        .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+        .then(function(o) {
+            if (o.ok && o.data.ok) {
+                window.location.href = '{% url "tracker:diet_plan" %}';
+            } else {
+                e.target.disabled = false;
+                e.target.textContent = 'Insert this to my plan';
+                alert((o.data && o.data.error) ? o.data.error : 'Could not save plan.');
+            }
+        })
+        .catch(function() {
+            e.target.disabled = false;
+            e.target.textContent = 'Insert this to my plan';
+            alert('Network error. Please try again.');
+        });
+    });
+
+    function trackDietLast(role, content) {
+        if (role === 'user') lastUserText = content;
+        if (role === 'assistant') lastAssistantText = content;
+    }
+    // Hook into addMessage for diet so we keep lastUserText/lastAssistantText (already set in submit handler for assistant; for history we need to track when we add assistant messages)
+    // Actually we're already setting lastUserText in submit and lastAssistantText when we get the reply. So we're good. But we need to update lastUserText/lastAssistantText when we *add* messages from the existing DOM when restoring... We don't restore. So on each new message we set them. For "Generate my diet plan" we send last_user_text and last_assistant_text - we're setting those in the diet form submit. So we're good.
+
+    generatePlanBtn.addEventListener('click', function() {
+        if (!csrfToken) return;
+        generatePlanBtn.disabled = true;
+        addMessage(dietChat, 'assistant', 'Generating a fresh diet plan for today based on your current mood and wellness…', dietHistory, null, null);
+        fetch('{% url "tracker:diet_plan_generate" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ last_user_text: lastUserText || '', last_assistant_text: lastAssistantText || '' })
+        })
+        .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+        .then(function(o) {
+            if (o.ok && o.data.plan) {
+                lastAssistantText = "Here's your plan for today.";
+                addMessage(dietChat, 'assistant', "Here's your plan for today. Review it below and click \"Insert this to my plan\" when you're ready.", dietHistory, null, null, o.data.plan, '');
+            } else {
+                var err = (o.data && o.data.error) ? o.data.error : 'Unknown error';
+                addMessage(dietChat, 'assistant', 'Could not generate a diet plan: ' + err, dietHistory, null, null);
+            }
+        })
+        .catch(function() {
+            addMessage(dietChat, 'assistant', 'Network error. Please try again.', dietHistory, null, null);
+        })
+        .finally(function() { generatePlanBtn.disabled = false; });
+    });
+
+    // Bootstrap 5 tab show (ensure only one pane visible if JS runs without Bootstrap)
+    var tabSupport = document.getElementById('tab-support');
+    var tabDiet = document.getElementById('tab-diet');
+    document.getElementById('tab-support-btn').addEventListener('click', function() {
+        tabSupport.classList.add('active');
+        tabDiet.classList.remove('active');
+    });
+    document.getElementById('tab-diet-btn').addEventListener('click', function() {
+        tabDiet.classList.add('active');
+        tabSupport.classList.remove('active');
+    });
+})();
+</script>
+{% endblock %}

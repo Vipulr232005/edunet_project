@@ -22,11 +22,17 @@ class DailyLogAdmin(admin.ModelAdmin):
 
 @admin.register(DietDayLog)
 class DietDayLogAdmin(admin.ModelAdmin):
-    list_display = ('user', 'date', 'early_morning', 'breakfast', 'mid_morning', 'lunch', 'evening_snack', 'dinner', 'bedtime')
+    list_display = ('user', 'date', 'has_plan')
     list_filter = ('date',)
     search_fields = ('user__username',)
     date_hierarchy = 'date'
     ordering = ('-date',)
+    readonly_fields = ('plan', 'note', 'checked')
+
+    def has_plan(self, obj):
+        return obj.plan is not None
+    has_plan.boolean = True
+    has_plan.short_description = 'AI plan'
 
 
 @admin.register(NotificationPreference)
