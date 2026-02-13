@@ -965,6 +965,43 @@ def _totals_from_plan_slots(slots, checked):
 
 
 @login_required
+@require_http_methods(["POST"])
+def generate_recipe(request):
+    """
+    Generate a recipe for a specific dish.
+    Expects JSON: { "dish_name": str, "description": str (optional) }
+    Returns: { "recipe": str } or { "error": str }
+    """
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+        dish_name = (body.get("dish_name") or "").strip()
+        description = (body.get("description") or "").strip()
+        if not dish_name:
+            return JsonResponse({"error": "Dish name required"}, status=400)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    # Build prompt for recipe generation
+    prompt = f"Provide a simple, clear recipe for: {dish_name}"
+    if description:
+        prompt += f" ({description})"
+    prompt += ". Include ingredients list and step-by-step instructions. Keep it concise, PCOD-friendly, and easy to follow. Format with clear sections for Ingredients and Instructions."
+    
+    system_instruction = (
+        "You are a helpful recipe assistant. Provide clear, practical recipes "
+        "that are suitable for PCOD/PCOS management. Focus on whole foods, balanced nutrition, "
+        "and simple cooking methods. Keep recipes concise and easy to follow."
+    )
+    
+    api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
+    recipe_text, err = _call_gemini(prompt, system_instruction, api_key, history=None)
+    
+    if err:
+        return JsonResponse({"error": err}, status=503)
+    return JsonResponse({"recipe": recipe_text})
+
+
+@login_required
 def diet_plan(request):
     """
     Diet plan page: shows the AI-generated plan from the database,
