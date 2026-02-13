@@ -966,6 +966,54 @@ def _totals_from_plan_slots(slots, checked):
 
 @login_required
 @require_http_methods(["POST"])
+def find_order_options(request):
+    """
+    Find online ordering options for a dish within a price range.
+    Expects JSON: { "dish_name": str, "description": str (optional), "price_range": str }
+    Returns: { "options": str } or { "error": str }
+    """
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+        dish_name = (body.get("dish_name") or "").strip()
+        description = (body.get("description") or "").strip()
+        price_range = (body.get("price_range") or "mid-range").strip()
+        if not dish_name:
+            return JsonResponse({"error": "Dish name required"}, status=400)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+    # Map price range to description
+    price_descriptions = {
+        "budget": "₹50 - ₹200 (affordable, budget-friendly options)",
+        "mid-range": "₹200 - ₹500 (good quality, mid-range options)",
+        "premium": "₹500+ (high-quality, premium options)",
+    }
+    price_desc = price_descriptions.get(price_range, price_descriptions["mid-range"])
+    
+    # Build prompt for ordering information
+    prompt = f"Where can I order '{dish_name}'"
+    if description:
+        prompt += f" ({description})"
+    prompt += f" online? Price range: {price_desc}. "
+    prompt += "Provide 3-5 specific online platforms or restaurants (like Swiggy, Zomato, etc.) where this dish can be ordered. "
+    prompt += "Include platform names, approximate prices, and any helpful tips. Keep it concise and practical."
+    
+    system_instruction = (
+        "You are a helpful food ordering assistant. Provide practical information about "
+        "where users can order specific dishes online. Focus on popular food delivery platforms "
+        "and restaurants. Be specific about price ranges and availability."
+    )
+    
+    api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
+    options_text, err = _call_gemini(prompt, system_instruction, api_key, history=None)
+    
+    if err:
+        return JsonResponse({"error": err}, status=503)
+    return JsonResponse({"options": options_text})
+
+
+@login_required
+@require_http_methods(["POST"])
 def generate_recipe(request):
     """
     Generate a recipe for a specific dish.

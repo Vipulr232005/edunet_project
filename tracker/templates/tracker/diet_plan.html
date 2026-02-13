@@ -35,6 +35,65 @@
     box-shadow: 0 2px 4px rgba(255, 158, 188, 0.3);
 }
 .diet-slot .recipe-btn i { margin-right: 0.3rem; }
+.diet-slot .recipe-order-buttons {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+.diet-slot .order-btn { 
+    font-size: 0.85rem; 
+    padding: 0.4rem 1rem; 
+    border-radius: 20px;
+    background: linear-gradient(135deg, #d4a5f5, #e0b8ff);
+    border: none;
+    color: #5b2941;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(212, 165, 245, 0.3);
+    width: 100%;
+    text-align: center;
+}
+.diet-slot .order-btn:hover {
+    background: linear-gradient(135deg, #e0b8ff, #e8c7ff);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(212, 165, 245, 0.4);
+    color: #5b2941;
+}
+.diet-slot .order-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(212, 165, 245, 0.3);
+}
+.diet-slot .order-btn i { margin-right: 0.3rem; }
+.price-range-option {
+    padding: 0.75rem 1rem;
+    border: 2px solid rgba(255, 158, 188, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+    margin-bottom: 0.75rem;
+}
+.price-range-option:hover {
+    border-color: #ff9ebc;
+    background: linear-gradient(135deg, #fff9fc, #fff5f8);
+}
+.price-range-option input[type="radio"]:checked + label {
+    color: #6b3350;
+    font-weight: 600;
+}
+.price-range-option input[type="radio"] {
+    margin-right: 0.75rem;
+    accent-color: #ff9ebc;
+}
+.price-range-option label {
+    cursor: pointer;
+    margin: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
 .recipe-text { 
     white-space: pre-wrap; 
     line-height: 1.8; 
@@ -150,12 +209,20 @@
                                         <span class="slot-time d-block">{{ slot.label|default:slot.time }}</span>
                                         <span class="slot-foods">{{ slot.description }}</span>
                                     </label>
-                                    <button type="button" class="recipe-btn" 
-                                            data-dish-name="{{ slot.title|default:slot.description|truncatewords:5 }}" 
-                                            data-description="{{ slot.description }}"
-                                            title="Get recipe for this dish">
-                                        <i class="bi bi-book"></i> Recipe
-                                    </button>
+                                    <div class="recipe-order-buttons">
+                                        <button type="button" class="recipe-btn" 
+                                                data-dish-name="{{ slot.title|default:slot.description|truncatewords:5 }}" 
+                                                data-description="{{ slot.description }}"
+                                                title="Get recipe for this dish">
+                                            <i class="bi bi-book"></i> Recipe
+                                        </button>
+                                        <button type="button" class="order-btn" 
+                                                data-dish-name="{{ slot.title|default:slot.description|truncatewords:5 }}" 
+                                                data-description="{{ slot.description }}"
+                                                title="Find where to order this dish">
+                                            <i class="bi bi-cart"></i> Order
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             {% endwith %}
@@ -222,6 +289,76 @@
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <p class="mt-3 text-muted">Generating recipe...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i>Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Modal - Price Range Selection -->
+    <div class="modal fade recipe-modal" id="orderPriceModal" tabindex="-1" aria-labelledby="orderPriceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderPriceModalLabel">
+                        <i class="bi bi-cart me-2"></i>Select Price Range
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3 text-muted">Choose your preferred price range for ordering:</p>
+                    <form id="priceRangeForm">
+                        <div class="price-range-option">
+                            <input type="radio" id="price_budget" name="price_range" value="budget" checked>
+                            <label for="price_budget">
+                                <strong>Budget</strong> (₹50 - ₹200) - Affordable options
+                            </label>
+                        </div>
+                        <div class="price-range-option">
+                            <input type="radio" id="price_mid" name="price_range" value="mid-range">
+                            <label for="price_mid">
+                                <strong>Mid-Range</strong> (₹200 - ₹500) - Good quality options
+                            </label>
+                        </div>
+                        <div class="price-range-option">
+                            <input type="radio" id="price_premium" name="price_range" value="premium">
+                            <label for="price_premium">
+                                <strong>Premium</strong> (₹500+) - High-quality options
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" id="confirmPriceRange">
+                        <i class="bi bi-search me-1"></i>Find Options
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Results Modal -->
+    <div class="modal fade recipe-modal" id="orderResultsModal" tabindex="-1" aria-labelledby="orderResultsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderResultsModalLabel">
+                        <i class="bi bi-cart-check me-2"></i>Where to Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="orderResultsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status" style="color: #b388ff; width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Finding ordering options...</p>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -350,6 +487,66 @@
             .catch(function() {
                 contentEl.innerHTML = '<div class="alert alert-danger">Network error. Please try again.</div>';
             });
+            });
+    });
+    
+    // Order button - show price range selection
+    var currentDishName = '';
+    var currentDescription = '';
+    document.querySelectorAll('.order-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            currentDishName = this.dataset.dishName || '';
+            currentDescription = this.dataset.description || '';
+            var priceModal = new bootstrap.Modal(document.getElementById('orderPriceModal'));
+            priceModal.show();
+        });
+    });
+    
+    // Confirm price range and fetch ordering options
+    document.getElementById('confirmPriceRange').addEventListener('click', function() {
+        var selectedPrice = document.querySelector('input[name="price_range"]:checked').value;
+        var priceModalEl = document.getElementById('orderPriceModal');
+        var priceModal = bootstrap.Modal.getInstance(priceModalEl);
+        var resultsModal = new bootstrap.Modal(document.getElementById('orderResultsModal'));
+        var resultsContent = document.getElementById('orderResultsContent');
+        var resultsTitle = document.getElementById('orderResultsModalLabel');
+        
+        priceModal.hide();
+        resultsTitle.textContent = 'Where to Order: ' + currentDishName;
+        resultsModal.show();
+        resultsContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status" style="color: #b388ff; width: 3rem; height: 3rem;"></div><p class="mt-3 text-muted">Finding ordering options...</p></div>';
+        
+        fetch('{% url "tracker:find_order_options" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ 
+                dish_name: currentDishName, 
+                description: currentDescription,
+                price_range: selectedPrice 
+            })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(o) {
+            if (o.ok && o.data.options) {
+                var options = o.data.options
+                    .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #6b3350;">$1</strong>')
+                    .replace(/^(Swiggy|Zomato|Uber Eats|Restaurant|Platform|Option)/gmi, '<h6 class="fw-semibold mt-3 mb-2" style="color: #6b3350;">$1</h6>');
+                var paragraphs = options.split(/\n\n+/);
+                var formatted = paragraphs.map(function(p) {
+                    p = p.trim();
+                    if (!p) return '';
+                    if (p.startsWith('<h6')) return p;
+                    return '<p class="mb-3">' + p.replace(/\n/g, '<br>') + '</p>';
+                }).filter(function(p) { return p; }).join('');
+                resultsContent.innerHTML = '<div class="recipe-text">' + formatted + '</div>';
+            } else {
+                resultsContent.innerHTML = '<div class="alert alert-warning" style="background: linear-gradient(135deg, #fff0f5, #ffe4ef); border: 1px solid rgba(255, 158, 188, 0.3); color: #6b3350;">' + 
+                    '<i class="bi bi-exclamation-triangle me-2"></i>Error: ' + (o.data.error || 'Unknown error') + '</div>';
+            }
+        })
+        .catch(function() {
+            resultsContent.innerHTML = '<div class="alert alert-warning" style="background: linear-gradient(135deg, #fff0f5, #ffe4ef); border: 1px solid rgba(255, 158, 188, 0.3); color: #6b3350;">Network error. Please try again.</div>';
         });
     });
 })();

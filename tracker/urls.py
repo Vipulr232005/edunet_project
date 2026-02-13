@@ -14,6 +14,7 @@ urlpatterns = [
     path('diet-plan/import/', views.diet_plan_import, name='diet_plan_import'),
     path('diet-plan/generate/', views.diet_plan_generate, name='diet_plan_generate'),
     path('diet-plan/generate-recipe/', views.generate_recipe, name='generate_recipe'),
+    path('diet-plan/find-order-options/', views.find_order_options, name='find_order_options'),
     path('ai-diet-agent/', views.ai_diet_agent, name='ai_diet_agent'),
     path('ai/support/chat/', views.pcod_support_chat, name='pcod_support_chat'),
     path('ai/diet/chat/', views.diet_planner_chat, name='diet_planner_chat'),
