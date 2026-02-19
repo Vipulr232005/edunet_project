@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import urllib.request
 import urllib.error
 import logging
@@ -663,7 +664,7 @@ def _mood_label_for_agent(mood_value):
     return "calm / moderate"
 
 
-def _call_gemini(user_message, system_instruction, api_key, history=None):
+def _call_gemini(user_message, system_instruction, api_key, history=None, max_output_tokens=1024):
     """Call Gemini generateContent API. Returns (reply_text, error_message)."""
     if not api_key or not api_key.strip():
         logger.error("Gemini API key is missing or empty. Check GEMINI_API_KEY in environment/.env.")
@@ -685,11 +686,11 @@ def _call_gemini(user_message, system_instruction, api_key, history=None):
     full_prompt = "".join(prompt_parts)
     payload = {
         "contents": [{"parts": [{"text": full_prompt}]}],
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024},
+        "generationConfig": {"temperature": 0.7, "maxOutputTokens": max_output_tokens},
     }
     body = json.dumps(payload).encode("utf-8")
     # Prefer Gemma 3 12B; fallback to Gemini Flash models (all v1beta)
-    for model in ("gemma-3-12b-it", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"):
+    for model in (      "gemini-2.5-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
@@ -914,25 +915,58 @@ def diet_plan_generate(request):
     system_instruction = (
         SYSTEM_DIET_PROMPT_BASE + "\n\n" + wellness_ctx + " "
         "For this specific request, you MUST respond with ONLY a single JSON object, "
-        "no explanation, no extra text. Use multiple slots for the full day. "
+        "no explanation, no extra text, no markdown formatting, no code blocks. "
+        "Start directly with { and end with }. Use multiple slots for the full day. "
         "Adjust foods and macros for PCOD-friendly, balanced meals. "
     )
     if preference_ctx:
         system_instruction += "Strictly respect when shaping the plan: " + preference_ctx + " "
-    system_instruction += "Remember: return ONLY valid JSON, nothing else."
+    system_instruction += (
+        "CRITICAL: Return ONLY valid JSON starting with { and ending with }. "
+        "Do not wrap in markdown code blocks. Do not add any text before or after the JSON."
+    )
     # Simple message; full prompt is built inside _call_gemini
+    # Use higher token limit so full diet plan JSON is not truncated
     message = "Generate today's full-day diet plan as JSON."
-    reply_text, err = _call_gemini(message, system_instruction, api_key, history=None)
+    reply_text, err = _call_gemini(
+        message, system_instruction, api_key, history=None, max_output_tokens=8192
+    )
     if err:
         return JsonResponse({"error": err}, status=503)
-    # Try to extract the JSON object from the reply (model may add extra text)
-    try:
-        json_start = reply_text.index("{")
-        json_end = reply_text.rindex("}") + 1
-        json_str = reply_text[json_start:json_end]
-        plan = json.loads(json_str)
-    except Exception as e:
-        return JsonResponse({"error": "Model did not return valid JSON: " + str(e)}, status=502)
+    # Try to extract the JSON object from the reply (model may add extra text or markdown)
+    plan = None
+    json_str = None
+    
+    # First, try to extract JSON from markdown code blocks (```json ... ```)
+    json_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', reply_text, re.DOTALL)
+    if json_block_match:
+        json_str = json_block_match.group(1)
+        try:
+            plan = json.loads(json_str)
+        except json.JSONDecodeError:
+            json_str = None
+    
+    # If no code block found, try to find JSON between first { and last }
+    if json_str is None:
+        try:
+            json_start = reply_text.index("{")
+            json_end = reply_text.rindex("}") + 1
+            json_str = reply_text[json_start:json_end]
+            plan = json.loads(json_str)
+        except (ValueError, json.JSONDecodeError):
+            # Try to find any JSON-like structure
+            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', reply_text, re.DOTALL)
+            if json_match:
+                try:
+                    json_str = json_match.group(0)
+                    plan = json.loads(json_str)
+                except json.JSONDecodeError:
+                    pass
+    
+    if plan is None:
+        return JsonResponse({
+            "error": "Model did not return valid JSON. Response: " + reply_text[:200]
+        }, status=502)
     # Reuse the same validation/storage logic as import
     if not isinstance(plan, dict):
         return JsonResponse({"error": "Returned plan is not a JSON object."}, status=502)

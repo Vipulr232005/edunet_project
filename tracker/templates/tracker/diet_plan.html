@@ -378,6 +378,18 @@
 (function() {
     var hasPlan = {{ has_plan|yesno:"true,false" }};
     if (!hasPlan) return;
+
+    // Small helper to safely inject dish names into HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     var labels = {{ chart_labels_json|safe }};
     var protein = {{ chart_protein_json|safe }};
     var carbs = {{ chart_carbs_json|safe }};
@@ -503,51 +515,26 @@
         });
     });
     
-    // Confirm price range and fetch ordering options
+    // Confirm price range and go directly to Swiggy
     document.getElementById('confirmPriceRange').addEventListener('click', function() {
         var selectedPrice = document.querySelector('input[name="price_range"]:checked').value;
         var priceModalEl = document.getElementById('orderPriceModal');
         var priceModal = bootstrap.Modal.getInstance(priceModalEl);
-        var resultsModal = new bootstrap.Modal(document.getElementById('orderResultsModal'));
-        var resultsContent = document.getElementById('orderResultsContent');
-        var resultsTitle = document.getElementById('orderResultsModalLabel');
         
+        // Close the price modal
         priceModal.hide();
-        resultsTitle.textContent = 'Where to Order: ' + currentDishName;
-        resultsModal.show();
-        resultsContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status" style="color: #b388ff; width: 3rem; height: 3rem;"></div><p class="mt-3 text-muted">Finding ordering options...</p></div>';
-        
-        fetch('{% url "tracker:find_order_options" %}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-            body: JSON.stringify({ 
-                dish_name: currentDishName, 
-                description: currentDescription,
-                price_range: selectedPrice 
-            })
-        })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-        .then(function(o) {
-            if (o.ok && o.data.options) {
-                var options = o.data.options
-                    .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #6b3350;">$1</strong>')
-                    .replace(/^(Swiggy|Zomato|Uber Eats|Restaurant|Platform|Option)/gmi, '<h6 class="fw-semibold mt-3 mb-2" style="color: #6b3350;">$1</h6>');
-                var paragraphs = options.split(/\n\n+/);
-                var formatted = paragraphs.map(function(p) {
-                    p = p.trim();
-                    if (!p) return '';
-                    if (p.startsWith('<h6')) return p;
-                    return '<p class="mb-3">' + p.replace(/\n/g, '<br>') + '</p>';
-                }).filter(function(p) { return p; }).join('');
-                resultsContent.innerHTML = '<div class="recipe-text">' + formatted + '</div>';
-            } else {
-                resultsContent.innerHTML = '<div class="alert alert-warning" style="background: linear-gradient(135deg, #fff0f5, #ffe4ef); border: 1px solid rgba(255, 158, 188, 0.3); color: #6b3350;">' + 
-                    '<i class="bi bi-exclamation-triangle me-2"></i>Error: ' + (o.data.error || 'Unknown error') + '</div>';
-            }
-        })
-        .catch(function() {
-            resultsContent.innerHTML = '<div class="alert alert-warning" style="background: linear-gradient(135deg, #fff0f5, #ffe4ef); border: 1px solid rgba(255, 158, 188, 0.3); color: #6b3350;">Network error. Please try again.</div>';
-        });
+
+        // If we don't have a dish name, do nothing
+        var dishName = (currentDishName || '').trim();
+        if (!dishName) {
+            return;
+        }
+
+        // Open Swiggy's own search with the dish in the query
+        // Swiggy web search uses ?query=<term>
+        var q = encodeURIComponent(dishName);
+        var url = 'https://www.swiggy.com/search?query=' + q;
+        window.open(url, '_blank');
     });
 })();
 </script>
