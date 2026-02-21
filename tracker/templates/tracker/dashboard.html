@@ -52,15 +52,15 @@
                                 <div class="flex-grow-1 metric-text-wrapper">
                                     <div class="metric-label mb-1">Symptoms today</div>
                                     <div class="metric-value mb-1">{{ symptoms_count|default:0 }}</div>
-                                    <small class="badge-soft" style="background:#ffe4ef;color:#6a274a;">Acne: {{ acne_level|default:"–" }}/10</small>
+                                    <small class="badge-soft" style="background:#ffe4ef;color:#6a274a;">Acne: {{ acne_level_display }}</small>
                                 </div>
                             </div>
                             <div class="metric-card-detail">
                                 <hr class="my-2 opacity-25">
-                                <small class="d-block"><strong>Acne</strong> {{ acne_level|default:"–" }}/10</small>
-                                <small class="d-block"><strong>Fatigue</strong> {{ fatigue_level|default:"–" }}/10</small>
-                                <small class="d-block"><strong>Bloating</strong> {{ bloating_level|default:"–" }}/10</small>
-                                <small class="d-block"><strong>Sleep</strong> {{ sleep_quality|default:"–" }}/10</small>
+                                <small class="d-block"><strong>Acne</strong> {{ acne_level_display }}</small>
+                                <small class="d-block"><strong>Fatigue</strong> {{ fatigue_level_display }}</small>
+                                <small class="d-block"><strong>Bloating</strong> {{ bloating_level_display }}</small>
+                                <small class="d-block"><strong>Sleep</strong> {{ sleep_quality_display }}</small>
                                 <p class="mb-0 mt-1 small opacity-75">Log more in the symptom board below.</p>
                             </div>
                             </div>
@@ -130,11 +130,11 @@
                         <div class="card-body text-center d-flex flex-column metric-text-wrapper position-relative">
                             <div class="metric-card-compact">
                                 <span class="metric-label">Wellness score</span>
-                                <span class="metric-value">{{ wellness_score|default:"–" }}{% if wellness_score is not None %}%{% endif %}</span>
+                                <span class="metric-value">{{ wellness_score_display }}</span>
                             </div>
                             <div class="metric-card-full">
                             <div class="metric-label mb-1">Wellness score</div>
-                            <div class="metric-value">{{ wellness_score|default:"–" }}{% if wellness_score is not None %}%{% endif %}</div>
+                            <div class="metric-value">{{ wellness_score_display }}</div>
                             <span class="tag-chip mt-1">This week's vibe</span>
                             <div class="metric-card-detail">
                                 <hr class="my-2 opacity-25">
@@ -165,22 +165,22 @@
                                 <div class="col-6 col-md-3">
                                     <i class="bi bi-circle-fill fs-1" style="color:#ff6f91;"></i>
                                     <p class="mb-0 fw-medium">Acne</p>
-                                    <small>{{ acne_level|default:"–" }}/10</small>
+                                    <small>{{ acne_level_display }}</small>
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <i class="bi bi-emoji-dizzy fs-1" style="color:#ffb347;"></i>
                                     <p class="mb-0 fw-medium">Fatigue</p>
-                                    <small>{{ fatigue_level|default:"–" }}/10</small>
+                                    <small>{{ fatigue_level_display }}</small>
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <i class="bi bi-water fs-1" style="color:#64b5f6;"></i>
                                     <p class="mb-0 fw-medium">Bloating</p>
-                                    <small>{{ bloating_level|default:"–" }}/10</small>
+                                    <small>{{ bloating_level_display }}</small>
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <i class="bi bi-moon-stars fs-1" style="color:#9c27b0;"></i>
                                     <p class="mb-0 fw-medium">Sleep</p>
-                                    <small>{{ sleep_quality|default:"–" }}/10</small>
+                                    <small>{{ sleep_quality_display }}</small>
                                 </div>
                             </div>
                             <div class="collapse mt-3" id="logTodayForm">
@@ -193,13 +193,13 @@
                                         <div class="col-6 col-md-4"><label class="form-label small">Cycle day</label>{{ log_form.cycle_day }}</div>
                                         <div class="col-6 col-md-4"><label class="form-label small">Steps</label>{{ log_form.steps }}</div>
                                         <div class="col-6 col-md-4"><label class="form-label small">Water (glasses)</label>{{ log_form.water_glasses }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Wellness %</label>{{ log_form.wellness_score }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Acne (1–10)</label>{{ log_form.acne_level }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Fatigue (1–10)</label>{{ log_form.fatigue_level }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Bloating (1–10)</label>{{ log_form.bloating_level }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Sleep (1–10)</label>{{ log_form.sleep_quality }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Wellness</label>{{ log_form.wellness_score }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Acne</label>{{ log_form.acne_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Fatigue</label>{{ log_form.fatigue_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Bloating</label>{{ log_form.bloating_level }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Sleep</label>{{ log_form.sleep_quality }}</div>
                                         <div class="col-6 col-md-4"><label class="form-label small">Weight (kg)</label>{{ log_form.weight_kg }}</div>
-                                        <div class="col-6 col-md-4"><label class="form-label small">Mood (1–10)</label>{{ log_form.mood }}</div>
+                                        <div class="col-6 col-md-4"><label class="form-label small">Mood</label>{{ log_form.mood }}</div>
                                     </div>
                                     <button type="submit" class="btn btn-sm mt-3 rounded-pill" style="background:#ff9ebc;border:none;color:#5b2941;">Save my data</button>
                                 </form>

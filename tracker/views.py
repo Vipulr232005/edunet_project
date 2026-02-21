@@ -223,6 +223,26 @@ def dashboard(request):
     def default(val, d):
         return val if val is not None else d
 
+    def symptom_display(val):
+        """Map symptom/mood number (1–10) to Low / Mid / High for display."""
+        if val is None:
+            return "–"
+        if val <= 3:
+            return "Low"
+        if val <= 7:
+            return "Mid"
+        return "High"
+
+    def wellness_display(val):
+        """Map wellness 0–100 to Good / Average / Bad for display."""
+        if val is None:
+            return "–"
+        if val <= 33:
+            return "Bad"
+        if val <= 66:
+            return "Average"
+        return "Good"
+
     # Show the motivation popup only once per login/session.
     # We store a flag in the Django session so that after the first
     # successful render of the dashboard, the popup is not shown again
@@ -247,14 +267,21 @@ def dashboard(request):
             'today_log': today_log,
             'log_form': DailyLogForm(instance=today_log),
             'symptoms_count': symptoms_count,
-            'acne_level': default(today_log.acne_level, 0),
-            'fatigue_level': default(today_log.fatigue_level, 0),
-            'bloating_level': default(today_log.bloating_level, 0),
-            'sleep_quality': default(today_log.sleep_quality, 0),
+            'acne_level': today_log.acne_level,
+            'fatigue_level': today_log.fatigue_level,
+            'bloating_level': today_log.bloating_level,
+            'sleep_quality': today_log.sleep_quality,
+            'mood': today_log.mood,
+            'acne_level_display': symptom_display(today_log.acne_level),
+            'fatigue_level_display': symptom_display(today_log.fatigue_level),
+            'bloating_level_display': symptom_display(today_log.bloating_level),
+            'sleep_quality_display': symptom_display(today_log.sleep_quality),
+            'mood_display': symptom_display(today_log.mood),
             'cycle_day': default(today_log.cycle_day, 0),
             'steps': default(today_log.steps, 0),
             'water_glasses': default(today_log.water_glasses, 0),
-            'wellness_score': default(today_log.wellness_score, 0),
+            'wellness_score': today_log.wellness_score,
+            'wellness_score_display': wellness_display(today_log.wellness_score),
             'chart_labels': chart_labels,
             'chart_weight': chart_weight,
             'chart_mood': chart_mood,
@@ -277,10 +304,17 @@ def dashboard(request):
             'fatigue_level': None,
             'bloating_level': None,
             'sleep_quality': None,
+            'mood': None,
+            'acne_level_display': '–',
+            'fatigue_level_display': '–',
+            'bloating_level_display': '–',
+            'sleep_quality_display': '–',
+            'mood_display': '–',
             'cycle_day': None,
             'steps': None,
             'water_glasses': None,
             'wellness_score': None,
+            'wellness_score_display': '–',
             'chart_labels': chart_labels,
             'chart_weight': chart_weight,
             'chart_mood': chart_mood,
